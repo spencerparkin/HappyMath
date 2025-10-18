@@ -29,10 +29,30 @@ bool Rectangle::IsValid() const
 	return true;
 }
 
+void Rectangle::MakeInvalid()
+{
+	this->minCorner.x = std::numeric_limits<double>::max();
+	this->minCorner.y = std::numeric_limits<double>::max();
+	this->maxCorner.x = std::numeric_limits<double>::min();
+	this->maxCorner.y = std::numeric_limits<double>::min();
+}
+
 void Rectangle::operator=(const Rectangle& rectangle)
 {
 	this->minCorner = rectangle.minCorner;
 	this->maxCorner = rectangle.maxCorner;
+}
+
+void Rectangle::operator+=(const Vector2& vector)
+{
+	this->minCorner += vector;
+	this->maxCorner += vector;
+}
+
+void Rectangle::operator-=(const Vector2& vector)
+{
+	this->minCorner -= vector;
+	this->maxCorner -= vector;
 }
 
 double Rectangle::GetWidth() const
@@ -48,6 +68,11 @@ double Rectangle::GetHeight() const
 double Rectangle::GetAspectRatio() const
 {
 	return this->GetWidth() / this->GetHeight();
+}
+
+Vector2 Rectangle::GetCenter() const
+{
+	return (this->minCorner + this->maxCorner) / 2.0;
 }
 
 bool Rectangle::ContainsPoint(const Vector2& point) const
@@ -71,14 +96,40 @@ void Rectangle::ExpandToIncludePoint(const Vector2& point)
 	this->maxCorner.y = HM_MAX(this->maxCorner.y, point.y);
 }
 
+void Rectangle::ExpandToIncludeRect(const Rectangle& rectangle)
+{
+	this->ExpandToIncludePoint(rectangle.minCorner);
+	this->ExpandToIncludePoint(rectangle.maxCorner);
+}
+
+void Rectangle::ScaleHorizontallyToMatchAspectRatio(double aspectRatio)
+{
+	double delta = (this->GetHeight() * aspectRatio - this->GetWidth()) / 2.0;
+	this->minCorner.x -= delta;
+	this->minCorner.x += delta;
+}
+
+void Rectangle::ScaleVerticallyToMatchAspectRatio(double aspectRatio)
+{
+	double delta = (this->GetWidth() / aspectRatio - this->GetHeight()) / 2.0;
+	this->minCorner.y -= delta;
+	this->maxCorner.y += delta;
+}
+
 void Rectangle::ExpandToMatchAspectRatio(double aspectRatio)
 {
-	// TODO: Write this.
+	if (aspectRatio > this->GetAspectRatio())
+		this->ScaleVerticallyToMatchAspectRatio(aspectRatio);
+	else
+		this->ScaleHorizontallyToMatchAspectRatio(aspectRatio);
 }
 
 void Rectangle::ContractToMatchAspectRatio(double aspectRatio)
 {
-	// TODO: Write this.
+	if (aspectRatio < this->GetAspectRatio())
+		this->ScaleVerticallyToMatchAspectRatio(aspectRatio);
+	else
+		this->ScaleHorizontallyToMatchAspectRatio(aspectRatio);
 }
 
 Vector2 Rectangle::PointToUVs(const Vector2& point) const
