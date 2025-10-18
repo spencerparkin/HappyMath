@@ -1,0 +1,80 @@
+#pragma once
+
+#include "HappyMath/Common.h"
+#include "HappyMath/PolygonMesh.h"
+
+namespace HappyMath
+{
+	class PolygonMesh;
+
+	/**
+	 * This is essentially meta-data about a polygon mesh.
+	 * Vertices of the graph are faces of the mesh.  Edges of
+	 * the graph represent adjacencies of polygons in the mesh.
+	 */
+	class HAPPY_MATH_API FacetGraph
+	{
+	public:
+		FacetGraph();
+		virtual ~FacetGraph();
+
+		/**
+		 * Regenerate this graph as a function of the given mesh.
+		 * Note that the given mesh cannot safely go out of scope
+		 * before this graph goes out of scope, because we cache
+		 * pointers to the polygon mesh internals here.
+		 */
+		bool Regenerate(const PolygonMesh& polygonMesh);
+
+		/**
+		 * Reset this graph to the empty graph and reclaim all memory.
+		 */
+		void Clear();
+
+		/**
+		 * Try to tri-strip the mesh.  Our result here just tries to be
+		 * correct, not necessarily optimal.
+		 */
+		bool GenerateTriangleStrip(std::vector<int>& triangleStrip) const;
+
+		/**
+		 * Each of these represents a facet (or polygon) of a polygon mesh.
+		 */
+		class Node
+		{
+		public:
+			Node(const PolygonMesh::Polygon* polygon);
+			virtual ~Node();
+
+			/**
+			 * This is used by the graph generation process.
+			 */
+			static bool SharedAdjacencyFound(const Node* nodeA, const Node* nodeB, int& vertexA, int& vertexB);
+
+			/**
+			 * Find the index of this node's adjacency that points to the given node; or -1, if not found.
+			 */
+			int FindAdjacencyIndex(const Node* node) const;
+
+		public:
+			/**
+			 * This is the polygon we represent.
+			 */
+			const PolygonMesh::Polygon* polygon;
+
+			/**
+			 * The order here parallels that of the vertex array
+			 * for each polygon of the mesh.  An element can be
+			 * null if there is no adjacency for the side of the
+			 * polygon in question.
+			 */
+			std::vector<Node*> adjacencyArray;
+
+			mutable bool visited;
+		};
+
+	private:
+
+		std::vector<Node*> nodeArray;
+	};
+}

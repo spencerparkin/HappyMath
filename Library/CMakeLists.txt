@@ -1,0 +1,70 @@
+set(HAPPY_MATH_SOURCES
+	Source/HappyMath/Angle.cpp
+	Source/HappyMath/Angle.h
+	Source/HappyMath/AnimTransform.cpp
+	Source/HappyMath/AnimTransform.h
+	Source/HappyMath/AxisAlignedBoundingBox.cpp
+	Source/HappyMath/AxisAlignedBoundingBox.h
+	Source/HappyMath/Common.h
+	Source/HappyMath/ExpandingPolytopeAlgorithm.cpp
+	Source/HappyMath/ExpandingPolytopeAlgorithm.h
+	Source/HappyMath/FacetGraph.cpp
+	Source/HappyMath/FacetGraph.h
+	Source/HappyMath/Frustum.cpp
+	Source/HappyMath/Frustum.h
+	Source/HappyMath/Function.cpp
+	Source/HappyMath/Function.h
+	Source/HappyMath/GJKAlgorithm.cpp
+	Source/HappyMath/GJKAlgorithm.h
+	Source/HappyMath/Graph.cpp
+	Source/HappyMath/Graph.h
+	Source/HappyMath/Interval.cpp
+	Source/HappyMath/Interval.h
+	Source/HappyMath/LineSegment.cpp
+	Source/HappyMath/LineSegment.h
+	Source/HappyMath/Matrix2x2.cpp
+	Source/HappyMath/Matrix2x2.h
+	Source/HappyMath/Matrix3x3.cpp
+	Source/HappyMath/Matrix3x3.h
+	Source/HappyMath/Matrix4x4.cpp
+	Source/HappyMath/Matrix4x4.h
+	Source/HappyMath/Plane.cpp
+	Source/HappyMath/Plane.h
+	Source/HappyMath/Polygon.cpp
+	Source/HappyMath/Polygon.h
+	Source/HappyMath/PolygonMesh.cpp
+	Source/HappyMath/PolygonMesh.h
+	Source/HappyMath/Quaternion.cpp
+	Source/HappyMath/Quaternion.h
+	Source/HappyMath/Random.cpp
+	Source/HappyMath/Random.h
+	Source/HappyMath/Ray.cpp
+	Source/HappyMath/Ray.h
+	Source/HappyMath/Rectangle.cpp
+	Source/HappyMath/Rectangle.h
+	Source/HappyMath/SphericalCoords.cpp
+	Source/HappyMath/SphericalCoords.h
+	Source/HappyMath/StackHeap.cpp
+	Source/HappyMath/StackHeap.h
+	Source/HappyMath/Transform.cpp
+	Source/HappyMath/Transform.h
+	Source/HappyMath/Vector2.cpp
+	Source/HappyMath/Vector2.h
+	Source/HappyMath/Vector3.cpp
+	Source/HappyMath/Vector3.h
+	Source/HappyMath/Vector4.cpp
+	Source/HappyMath/Vector4.h
+)
+
+add_library(HappyMath STATIC
+	${HAPPY_MATH_SOURCES}
+)
+
+target_compile_definitions(HappyMath PRIVATE
+    _USE_MATH_DEFINES
+    _CRT_SECURE_NO_WARNINGS
+)
+
+target_include_directories(HappyMath PUBLIC
+	Source
+)

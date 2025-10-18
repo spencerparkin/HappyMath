@@ -1,0 +1,75 @@
+#pragma once
+
+#include "HappyMath/Common.h"
+#include <vector>
+
+namespace HappyMath
+{
+	/**
+	 * This is a heap that provides O(1) allocate and deallocation by
+	 * virtue of the fact that every allocation is the same size.
+	 */
+	class HAPPY_MATH_API StackHeap
+	{
+	public:
+		StackHeap();
+		virtual ~StackHeap();
+
+		bool SetManagedMemory(uint8_t* memoryBuffer, uint64_t memoryBufferSize, uint64_t blockSize);
+
+		uint8_t* AllocateBlock();
+		bool DeallocateBlock(uint8_t* block);
+		uint64_t NumFreeBlocks() const;
+
+	protected:
+		uint8_t* memoryBuffer;
+		uint64_t memoryBufferSize;
+		uint64_t blockSize;
+		std::vector<uint64_t> blockStack;
+	};
+
+	/**
+	 * This class offers a convenient way to utilize a stack heap
+	 * to manage class instances.  Constructors and destructors
+	 * are called on allocation and deallocation, respectively.
+	 */
+	template<typename T>
+	class HAPPY_MATH_API ObjectStackHeap : public StackHeap
+	{
+	public:
+		ObjectStackHeap()
+		{
+		}
+
+		virtual ~ObjectStackHeap()
+		{
+		}
+
+		void Configure(uint8_t* memoryBuffer, uint64_t memoryBufferSize)
+		{
+			this->SetManagedMemory(memoryBuffer, memoryBufferSize, sizeof(T));
+		}
+
+		T* Allocate()
+		{
+			HM_ASSERT(this->blockSize >= sizeof(T));
+
+			uint8_t* block = this->AllocateBlock();
+			if (!block)
+				return nullptr;
+
+			T* object = new (block) T();
+			return object;
+		}
+
+		bool Deallocate(T* object)
+		{
+			auto block = reinterpret_cast<uint8_t*>(object);
+			if (!this->DeallocateBlock(block))
+				return false;
+
+			object->~T();
+			return true;
+		}
+	};
+}
