@@ -106,7 +106,7 @@ void Rectangle::ScaleHorizontallyToMatchAspectRatio(double aspectRatio)
 {
 	double delta = (this->GetHeight() * aspectRatio - this->GetWidth()) / 2.0;
 	this->minCorner.x -= delta;
-	this->minCorner.x += delta;
+	this->maxCorner.x += delta;
 }
 
 void Rectangle::ScaleVerticallyToMatchAspectRatio(double aspectRatio)
@@ -118,7 +118,7 @@ void Rectangle::ScaleVerticallyToMatchAspectRatio(double aspectRatio)
 
 void Rectangle::ExpandToMatchAspectRatio(double aspectRatio)
 {
-	if (aspectRatio > this->GetAspectRatio())
+	if (aspectRatio < this->GetAspectRatio())
 		this->ScaleVerticallyToMatchAspectRatio(aspectRatio);
 	else
 		this->ScaleHorizontallyToMatchAspectRatio(aspectRatio);
@@ -126,7 +126,7 @@ void Rectangle::ExpandToMatchAspectRatio(double aspectRatio)
 
 void Rectangle::ContractToMatchAspectRatio(double aspectRatio)
 {
-	if (aspectRatio < this->GetAspectRatio())
+	if (aspectRatio > this->GetAspectRatio())
 		this->ScaleVerticallyToMatchAspectRatio(aspectRatio);
 	else
 		this->ScaleHorizontallyToMatchAspectRatio(aspectRatio);
