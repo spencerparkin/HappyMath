@@ -132,6 +132,42 @@ void Rectangle::ContractToMatchAspectRatio(double aspectRatio)
 		this->ScaleHorizontallyToMatchAspectRatio(aspectRatio);
 }
 
+void Rectangle::ScaleHorizontally(double scale)
+{
+	Vector2 center = this->GetCenter();
+	Vector2 delta = this->maxCorner - center;
+	delta.x *= scale;
+	this->minCorner = center - delta;
+	this->maxCorner = center + delta;
+}
+
+void Rectangle::ScaleVertically(double scale)
+{
+	Vector2 center = this->GetCenter();
+	Vector2 delta = this->maxCorner - center;
+	delta.y *= scale;
+	this->minCorner = center - delta;
+	this->maxCorner = center + delta;
+}
+
+void Rectangle::AddHorizontalMargin(double margin)
+{
+	Vector2 center = this->GetCenter();
+	Vector2 delta = this->maxCorner - center;
+	delta.x += margin;
+	this->minCorner = center - delta;
+	this->maxCorner = center + delta;
+}
+
+void Rectangle::AddVerticalMargin(double margin)
+{
+	Vector2 center = this->GetCenter();
+	Vector2 delta = this->maxCorner - center;
+	delta.y += margin;
+	this->minCorner = center - delta;
+	this->maxCorner = center + delta;
+}
+
 Vector2 Rectangle::PointToUVs(const Vector2& point) const
 {
 	Vector2 uv;

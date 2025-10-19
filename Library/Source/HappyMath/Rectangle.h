@@ -32,6 +32,10 @@ namespace HappyMath
 		void ScaleVerticallyToMatchAspectRatio(double aspectRatio);
 		void ExpandToMatchAspectRatio(double aspectRatio);
 		void ContractToMatchAspectRatio(double aspectRatio);
+		void ScaleHorizontally(double scale);
+		void ScaleVertically(double scale);
+		void AddHorizontalMargin(double margin);
+		void AddVerticalMargin(double margin);
 		Vector2 PointToUVs(const Vector2& point) const;
 		Vector2 PointFromUVs(const Vector2& uv) const;
 
