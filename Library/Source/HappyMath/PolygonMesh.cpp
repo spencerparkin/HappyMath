@@ -2,6 +2,7 @@
 #include "HappyMath/Polygon.h"
 #include "HappyMath/Graph.h"
 #include "HappyMath/ExpandingPolytopeAlgorithm.h"
+#include <functional>
 
 using namespace HappyMath;
 
@@ -76,6 +77,143 @@ void PolygonMesh::Clear()
 {
 	this->vertexArray.clear();
 	this->polygonArray.clear();
+}
+
+#define GOLDEN_RATIO			1.6180339887498948482
+
+bool PolygonMesh::GeneratePolyhedron(Polyhedron polyhedron)
+{
+	std::vector<Vector3> pointArray;
+
+	auto singleCombo = [](std::function<void(double a)> callback)
+		{
+			for (int i = 0; i < 2; i++)
+			{
+				double a = (i == 0) ? -1.0 : 1.0;
+				callback(a);
+			}
+		};
+
+	auto doubleCombo = [](std::function<void(double a, double b)> callback)
+		{
+			for (int i = 0; i < 2; i++)
+			{
+				double a = (i == 0) ? -1.0 : 1.0;
+				for (int j = 0; j < 2; j++)
+				{
+					double b = (j == 0) ? -1.0 : 1.0;
+					callback(a, b);
+				}
+			}
+		};
+
+	auto tripleCombo = [](std::function<void(double a, double b, double c)> callback)
+		{
+			for (int i = 0; i < 2; i++)
+			{
+				double a = (i == 0) ? -1.0 : 1.0;
+				for (int j = 0; j < 2; j++)
+				{
+					double b = (j == 0) ? -1.0 : 1.0;
+					for (int k = 0; k < 2; k++)
+					{
+						double c = (k == 0) ? -1.0 : 1.0;
+						callback(a, b, c);
+					}
+				}
+			}
+		};
+
+	switch (polyhedron)
+	{
+		case Polyhedron::TETRAHEDRON:
+		{
+			singleCombo([&pointArray](double a) {
+				pointArray.push_back(Vector3(a, 0, -1.0 / ::sqrt(2.0)));
+				pointArray.push_back(Vector3(0, a, 1.0 / ::sqrt(2.0)));
+				});
+			break;
+		}
+		case Polyhedron::OCTAHEDRON:
+		{
+			singleCombo([&pointArray](double a) {
+				pointArray.push_back(Vector3(a, 0.0, 0.0));
+				pointArray.push_back(Vector3(0.0, a, 0.0));
+				pointArray.push_back(Vector3(0.0, 0.0, a));
+				});
+			break;
+		}
+		case Polyhedron::HEXADRON:
+		{
+			tripleCombo([&pointArray](double a, double b, double c) {
+				pointArray.push_back(Vector3(a, b, c));
+				});
+			break;
+		}
+		case Polyhedron::ICOSAHEDRON:
+		{
+			doubleCombo([&pointArray](double a, double b) {
+				pointArray.push_back(Vector3(0.0, a, b * GOLDEN_RATIO));
+				pointArray.push_back(Vector3(a, b * GOLDEN_RATIO, 0.0));
+				pointArray.push_back(Vector3(a * GOLDEN_RATIO, 0.0, b));
+				});
+			break;
+		}
+		case Polyhedron::DODECAHEDRON:
+		{
+			tripleCombo([&pointArray](double a, double b, double c) {
+				pointArray.push_back(Vector3(a, b, c));
+				});
+			doubleCombo([&pointArray](double a, double b) {
+				pointArray.push_back(Vector3(0.0, a * GOLDEN_RATIO, b / GOLDEN_RATIO));
+				pointArray.push_back(Vector3(a / GOLDEN_RATIO, 0.0, b * GOLDEN_RATIO));
+				pointArray.push_back(Vector3(a * GOLDEN_RATIO, b / GOLDEN_RATIO, 0.0));
+				});
+			break;
+		}
+		case Polyhedron::ICOSIDODECAHEDRON:
+		{
+			singleCombo([&pointArray](double a) {
+				pointArray.push_back(Vector3(a * GOLDEN_RATIO, 0.0, 0.0));
+				pointArray.push_back(Vector3(0.0, a * GOLDEN_RATIO, 0.0));
+				pointArray.push_back(Vector3(0.0, 0.0, a * GOLDEN_RATIO));
+				});
+			tripleCombo([&pointArray](double a, double b, double c) {
+				pointArray.push_back(Vector3(a / 2.0, b * GOLDEN_RATIO / 2.0, c * GOLDEN_RATIO * GOLDEN_RATIO / 2.0));
+				pointArray.push_back(Vector3(a * GOLDEN_RATIO / 2.0, b * GOLDEN_RATIO * GOLDEN_RATIO / 2.0, c / 2.0));
+				pointArray.push_back(Vector3(a * GOLDEN_RATIO * GOLDEN_RATIO / 2.0, b / 2.0, c * GOLDEN_RATIO / 2.0));
+				});
+			break;
+		}
+		case Polyhedron::CUBOCTAHEDRON:
+		{
+			doubleCombo([&pointArray](double a, double b) {
+				pointArray.push_back(Vector3(a, b, 0.0));
+				pointArray.push_back(Vector3(a, 0.0, b));
+				pointArray.push_back(Vector3(0.0, a, b));
+				});
+			break;
+		}
+		case Polyhedron::RHOMBICOSIDODECAHEDRON:
+		{
+			tripleCombo([&pointArray](double a, double b, double c) {
+				pointArray.push_back(Vector3(a, b, c * GOLDEN_RATIO * GOLDEN_RATIO * GOLDEN_RATIO));
+				pointArray.push_back(Vector3(a, b * GOLDEN_RATIO * GOLDEN_RATIO * GOLDEN_RATIO, c));
+				pointArray.push_back(Vector3(a * GOLDEN_RATIO * GOLDEN_RATIO * GOLDEN_RATIO, b, c));
+				pointArray.push_back(Vector3(a * GOLDEN_RATIO * GOLDEN_RATIO, b * GOLDEN_RATIO, 2.0 * c * GOLDEN_RATIO));
+				pointArray.push_back(Vector3(a * GOLDEN_RATIO, 2.0 * b * GOLDEN_RATIO, c * GOLDEN_RATIO * GOLDEN_RATIO));
+				pointArray.push_back(Vector3(2.0 * a * GOLDEN_RATIO, b * GOLDEN_RATIO * GOLDEN_RATIO, c * GOLDEN_RATIO));
+				});
+			doubleCombo([&pointArray](double a, double b) {
+				pointArray.push_back(Vector3(a * (2.0 + GOLDEN_RATIO), 0.0, b * GOLDEN_RATIO * GOLDEN_RATIO));
+				pointArray.push_back(Vector3(0.0, a * GOLDEN_RATIO * GOLDEN_RATIO, b * (2.0 + GOLDEN_RATIO)));
+				pointArray.push_back(Vector3(a * GOLDEN_RATIO * GOLDEN_RATIO, b * (2.0 + GOLDEN_RATIO), 0.0));
+				});
+			break;
+		}
+	}
+
+	return this->GenerateConvexHull(pointArray);
 }
 
 bool PolygonMesh::GenerateConvexHull(const std::vector<Vector3>& pointArray)

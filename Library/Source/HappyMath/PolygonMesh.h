@@ -123,6 +123,23 @@ namespace HappyMath
 		 */
 		bool RayCast(const Ray& ray, double& alpha, Vector3& unitSurfaceNormal) const;
 
+		enum class Polyhedron
+		{
+			TETRAHEDRON,
+			OCTAHEDRON,
+			HEXADRON,
+			ICOSAHEDRON,
+			DODECAHEDRON,
+			ICOSIDODECAHEDRON,
+			CUBOCTAHEDRON,
+			RHOMBICOSIDODECAHEDRON
+		};
+
+		/**
+		 * Regenerate this mesh as the given polyhedron.
+		 */
+		bool GeneratePolyhedron(Polyhedron polyhedron);
+
 		/**
 		 * Write this mesh to the given stream in binary form.
 		 */
