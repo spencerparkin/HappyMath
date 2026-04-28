@@ -338,6 +338,31 @@ void Matrix4x4::SetRotation(const Vector3& axis, double angle)
 	this->SetCol(2, zAxisRotated);
 }
 
+bool Matrix4x4::SetAsViewTransform(const Vector3& cameraEye, const Vector3& cameraLookAt, const Vector3& cameraUp)
+{
+	Vector3 zAxis = cameraEye - cameraLookAt;
+	if (!zAxis.Normalize())
+		return false;
+
+	Vector3 xAxis = cameraUp.Cross(zAxis);
+	if (!xAxis.Normalize())
+		return false;
+
+	Vector3 yAxis;
+	yAxis = zAxis.Cross(xAxis);
+
+	Matrix4x4 orient;
+	orient.SetAxes(xAxis, yAxis, zAxis);
+
+	Matrix4x4 translate;
+	translate.SetTranslation(cameraEye);
+
+	Matrix4x4 viewToWorld;
+	viewToWorld.Multiply(translate, orient);
+	
+	return this->Invert(viewToWorld);
+}
+
 void Matrix4x4::RigidBodyMotion(const Vector3& axis, double angle, const Vector3& delta)
 {
 	this->SetIdentity();

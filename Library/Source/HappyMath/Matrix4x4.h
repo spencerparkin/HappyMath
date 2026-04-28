@@ -55,6 +55,7 @@ namespace HappyMath
 		void SetScale(const Vector3& scale);
 		void SetUniformScale(double scale);
 		void SetRotation(const Vector3& axis, double angle);
+		bool SetAsViewTransform(const Vector3& cameraEye, const Vector3& cameraLookAt, const Vector3& cameraUp);
 
 		bool OrthonormalizeOrientation();
 
