@@ -1,4 +1,5 @@
 #include "HappyMath/Polygon.h"
+#include "HappyMath/PolygonMesh.h"
 #include "HappyMath/Ray.h"
 #include "HappyMath/Interval.h"
 #include "HappyMath/LineSegment.h"
@@ -7,6 +8,8 @@
 #include <unordered_set>
 
 using namespace HappyMath;
+
+//--------------------------------------------- Polygon ---------------------------------------------
 
 Polygon::Polygon()
 {
@@ -1331,5 +1334,89 @@ void Polygon::Restore(std::istream& stream)
 		Vector3 vertex;
 		vertex.Restore(stream);
 		this->vertexArray.push_back(vertex);
+	}
+}
+
+//--------------------------------------------- PolygonBlender ---------------------------------------------
+
+PolygonBlender::PolygonBlender()
+{
+}
+
+/*virtual*/ PolygonBlender::~PolygonBlender()
+{
+}
+
+/*static*/ void PolygonBlender::Blend(std::vector<Polygon>& polygonArray, PolygonBlender* blender, int maxDepth)
+{
+	struct BlendTask
+	{
+		Polygon polygon;
+		int depth;
+	};
+
+	std::list<BlendTask> blendTaskQueue;
+	for (const Polygon& polygon : polygonArray)
+		blendTaskQueue.push_back({ polygon, 0 });
+
+	polygonArray.clear();
+
+	while (blendTaskQueue.size() > 0)
+	{
+		BlendTask task = *blendTaskQueue.begin();
+		blendTaskQueue.pop_front();
+
+		std::vector<Polygon> newPolygonArray;
+		blender->ProcessPolygon(task.polygon, newPolygonArray);
+
+		if (task.depth >= maxDepth)
+			polygonArray.push_back(task.polygon);
+		else
+			for (const Polygon& polygon : newPolygonArray)
+				blendTaskQueue.push_back({ polygon, task.depth + 1 });
+	}
+}
+
+/*static*/ void PolygonBlender::Blend(PolygonMesh& polygonMesh, PolygonBlender* blender, int maxDepth)
+{
+	std::vector<Polygon> polygonArray;
+	polygonMesh.ToStandalonePolygonArray(polygonArray);
+	Blend(polygonArray, blender, maxDepth);
+	polygonMesh.FromStandalonePolygonArray(polygonArray);
+}
+
+//--------------------------------------------- PolygonSubdivider ---------------------------------------------
+	
+PolygonSubdivider::PolygonSubdivider(double length)
+{
+	this->length = length;
+}
+
+/*virtual*/ PolygonSubdivider::~PolygonSubdivider()
+{
+}
+
+/*virtual*/ void PolygonSubdivider::ProcessPolygon(const Polygon& polygon, std::vector<Polygon>& polygonArray)
+{
+	Polygon centerPolygon;
+
+	for (int i = 0; i < (int)polygon.vertexArray.size(); i++)
+	{
+		int j = (i + 1) % polygon.vertexArray.size();
+		Vector3 midPoint = (polygon.vertexArray[i] + polygon.vertexArray[j]) / 2.0;
+		midPoint *= this->length / midPoint.Length();
+		centerPolygon.vertexArray.push_back(midPoint);
+	}
+
+	polygonArray.push_back(centerPolygon);
+
+	for (int i = 0; i < (int)centerPolygon.vertexArray.size(); i++)
+	{
+		int j = (i + 1) % centerPolygon.vertexArray.size();
+		Polygon triangle;
+		triangle.vertexArray.push_back(centerPolygon.vertexArray[i]);
+		triangle.vertexArray.push_back(polygon.vertexArray[j]);
+		triangle.vertexArray.push_back(centerPolygon.vertexArray[j]);
+		polygonArray.push_back(triangle);
 	}
 }

@@ -7,6 +7,7 @@
 namespace HappyMath
 {
 	class Ray;
+	class PolygonMesh;
 
 	/**
 	 * These are polygons represented as a sequence of 3D vertices, each one
@@ -341,5 +342,35 @@ namespace HappyMath
 
 	public:
 		std::vector<Vector3> vertexArray;
+	};
+
+	/**
+	 * 
+	 */
+	class PolygonBlender
+	{
+	public:
+		PolygonBlender();
+		virtual ~PolygonBlender();
+
+		virtual void ProcessPolygon(const Polygon& polygon, std::vector<Polygon>& polygonArray) = 0;
+
+		static void Blend(std::vector<Polygon>& polygonArray, PolygonBlender* blender, int maxDepth);
+		static void Blend(PolygonMesh& polygonMesh, PolygonBlender* blender, int maxDepth);
+	};
+
+	/**
+	 * This class is admittedly a bit contrived.
+	 */
+	class PolygonSubdivider : public PolygonBlender
+	{
+	public:
+		PolygonSubdivider(double length);
+		virtual ~PolygonSubdivider();
+
+		virtual void ProcessPolygon(const Polygon& polygon, std::vector<Polygon>& polygonArray) override;
+
+	protected:
+		double length;
 	};
 }

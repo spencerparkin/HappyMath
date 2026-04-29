@@ -79,9 +79,7 @@ void PolygonMesh::Clear()
 	this->polygonArray.clear();
 }
 
-#define GOLDEN_RATIO			1.6180339887498948482
-
-bool PolygonMesh::GeneratePolyhedron(Polyhedron polyhedron)
+bool PolygonMesh::GeneratePolyhedron(Polyhedron polyhedron, double radius)
 {
 	std::vector<Vector3> pointArray;
 
@@ -123,6 +121,8 @@ bool PolygonMesh::GeneratePolyhedron(Polyhedron polyhedron)
 				}
 			}
 		};
+
+#define GOLDEN_RATIO			1.6180339887498948482
 
 	switch (polyhedron)
 	{
@@ -212,6 +212,23 @@ bool PolygonMesh::GeneratePolyhedron(Polyhedron polyhedron)
 			break;
 		}
 	}
+
+	double longestLength = 0.0;
+
+	for (const Vector3& point : pointArray)
+	{
+		double length = point.Length();
+		if (length > longestLength)
+			longestLength = length;
+	}
+
+	if (longestLength == 0.0)
+		return false;
+
+	double scale = radius / longestLength;
+
+	for (Vector3& point : pointArray)
+		point *= scale;
 
 	return this->GenerateConvexHull(pointArray);
 }

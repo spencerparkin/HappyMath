@@ -137,8 +137,12 @@ namespace HappyMath
 
 		/**
 		 * Regenerate this mesh as the given polyhedron.
+		 * 
+		 * @param[in] polyedron This is the shape you want to make.
+		 * @param[in] radius The shape will be as big as possible while fitting in a sphere with this radius, centered at origin.
+		 * @return True is returned on success.
 		 */
-		bool GeneratePolyhedron(Polyhedron polyhedron);
+		bool GeneratePolyhedron(Polyhedron polyhedron, double radius);
 
 		/**
 		 * Write this mesh to the given stream in binary form.
