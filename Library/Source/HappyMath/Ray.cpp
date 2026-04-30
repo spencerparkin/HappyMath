@@ -2,6 +2,7 @@
 #include "HappyMath/Plane.h"
 #include "HappyMath/AxisAlignedBoundingBox.h"
 #include "HappyMath/LineSegment.h"
+#include "HappyMath/Function.h"
 #include <algorithm>
 
 using namespace HappyMath;
@@ -101,6 +102,32 @@ bool Ray::CastAgainst(const AxisAlignedBoundingBox& box, Interval& interval, dou
 		interval.Expand(0.0);
 
 	return interval.MakesSense();
+}
+
+bool Ray::CastAgainstSphere(const Vector3& center, double radius, double& alpha) const
+{
+	Vector3 vector = this->origin - center;
+
+	Quadratic quadratic;
+	quadratic.A = 1.0;
+	quadratic.B = 2.0 * this->unitDirection.Dot(vector);
+	quadratic.C = vector.SquareLength() - radius * radius;
+
+	std::vector<double> realRoots;
+	quadratic.Solve(realRoots);
+
+	if (realRoots.size() == 0)
+		return false;
+
+	if (realRoots.size() != 1 && realRoots.size() != 2)
+		return false;
+
+	if (realRoots.size() == 2)
+		alpha = realRoots[0] < realRoots[1] ? realRoots[0] : realRoots[1];
+	else
+		alpha = realRoots[0];
+
+	return true;
 }
 
 void Ray::ToLineSegment(LineSegment& lineSegment, double alpha) const

@@ -3,6 +3,7 @@
 #include "HappyMath/Vector3.h"
 #include "HappyMath/Vector4.h"
 #include "HappyMath/Quaternion.h"
+#include "HappyMath/Ray.h"
 #include <math.h>
 
 using namespace HappyMath;
@@ -202,6 +203,14 @@ Vector4 Matrix4x4::TransformVector(const Vector4& vector) const
 	return vectorTransformed;
 }
 
+Ray Matrix4x4::TransformRay(const Ray& ray) const
+{
+	Ray transformedRay;
+	transformedRay.origin = this->TransformPoint(ray.origin);
+	transformedRay.unitDirection = this->TransformVector(ray.unitDirection).Normalized();
+	return transformedRay;
+}
+
 void Matrix4x4::Multiply(const Matrix4x4& leftMatrix, const Matrix4x4& rightMatrix)
 {
 	for (int i = 0; i < 4; i++)
@@ -338,7 +347,7 @@ void Matrix4x4::SetRotation(const Vector3& axis, double angle)
 	this->SetCol(2, zAxisRotated);
 }
 
-bool Matrix4x4::SetAsViewTransform(const Vector3& cameraEye, const Vector3& cameraLookAt, const Vector3& cameraUp)
+bool Matrix4x4::SetAsViewToWorldTransform(const Vector3& cameraEye, const Vector3& cameraLookAt, const Vector3& cameraUp)
 {
 	Vector3 zAxis = cameraEye - cameraLookAt;
 	if (!zAxis.Normalize())
@@ -357,10 +366,9 @@ bool Matrix4x4::SetAsViewTransform(const Vector3& cameraEye, const Vector3& came
 	Matrix4x4 translate;
 	translate.SetTranslation(cameraEye);
 
-	Matrix4x4 viewToWorld;
-	viewToWorld.Multiply(translate, orient);
-	
-	return this->Invert(viewToWorld);
+	this->Multiply(translate, orient);
+
+	return true;
 }
 
 void Matrix4x4::RigidBodyMotion(const Vector3& axis, double angle, const Vector3& delta)

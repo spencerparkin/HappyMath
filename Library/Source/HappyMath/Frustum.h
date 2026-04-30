@@ -9,7 +9,10 @@ namespace HappyMath
 	class Matrix4x4;
 	class Plane;
 	class Vector3;
+	class Vector2;
 	class Transform;
+	class Ray;
+	class Rectangle;
 
 	/**
 	 * Frustums can be thought of as volumes in the shape of a pyramid, but the
@@ -75,6 +78,27 @@ namespace HappyMath
 		 * @param[in] farClip This is the distance along the -Z axis to the far clipping plane.  It is a postivie value.
 		 */
 		void SetFromAspectRatio(double aspectRatio, double hfovi, double nearClip, double farClip);
+
+		/**
+		 * Calculate a view-space ray from screen-space UVs.
+		 * 
+		 * @param[in] uvs These are the screen-space UVs.  They should be based on a rectangular screen with the correct aspect ratio.
+		 * @return A ray in view-space is returned here that shoots through the screen-space point at the given UVs.
+		 */
+		Ray CalcViewSpaceRay(const Vector2& uvs) const;
+
+		/**
+		 * Calculate the rectangle that slices the frustum at the given depth.
+		 * 
+		 * @param[in] depth This is distance along the -Z axis.
+		 */
+		Rectangle CalcRectangleAtDepth(double depth) const;
+
+		/**
+		 * Calculate the aspect ratio of any rectangle that slices the frustum
+		 * orthogonal to the major axis of the frustum.
+		 */
+		double GetAspectRatio() const;
 
 	public:
 		double hfovi;		///< This is the horizontal field of vision in radians.

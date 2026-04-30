@@ -11,6 +11,7 @@ namespace HappyMath
 	class Matrix3x3;
 	class Quaternion;
 	class Frustum;
+	class Ray;
 
 	/**
 	 * These are 4x4 matrices geared toward 3D computer graphics applications.
@@ -39,6 +40,7 @@ namespace HappyMath
 		Vector3 TransformVector(const Vector3& vector) const;
 		Vector3 TransformPoint(const Vector3& point) const;
 		Vector4 TransformVector(const Vector4& vector) const;
+		Ray TransformRay(const Ray& ray) const;
 
 		void Multiply(const Matrix4x4& leftMatrix, const Matrix4x4& rightMatrix);
 		bool Divide(const Matrix4x4& leftMatrix, const Matrix4x4& rightMatrix);
@@ -55,7 +57,7 @@ namespace HappyMath
 		void SetScale(const Vector3& scale);
 		void SetUniformScale(double scale);
 		void SetRotation(const Vector3& axis, double angle);
-		bool SetAsViewTransform(const Vector3& cameraEye, const Vector3& cameraLookAt, const Vector3& cameraUp);
+		bool SetAsViewToWorldTransform(const Vector3& cameraEye, const Vector3& cameraLookAt, const Vector3& cameraUp);
 
 		bool OrthonormalizeOrientation();
 

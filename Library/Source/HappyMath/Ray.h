@@ -91,6 +91,16 @@ namespace HappyMath
 		bool CastAgainst(const AxisAlignedBoundingBox& box, Interval& interval, double borderThickness = 0.0) const;
 
 		/**
+		 * Cast this ray against the given sphere.
+		 * 
+		 * @param[in] center The center of the sphere.
+		 * @param[in] radius The radius of the sphere.
+		 * @param[out] alpha The distance from ray origin to the hit point, if any.
+		 * @return True is returned if the ray hits the sphere; false, otherwise.
+		 */
+		bool CastAgainstSphere(const Vector3& center, double radius, double& alpha) const;
+
+		/**
 		 * Return a line segment joining the origin of this ray to a
 		 * point on this ray indicated by the given alpha value.
 		 * 

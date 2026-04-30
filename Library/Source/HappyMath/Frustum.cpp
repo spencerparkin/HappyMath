@@ -4,6 +4,7 @@
 #include "HappyMath/AxisAlignedBoundingBox.h"
 #include "HappyMath/Transform.h"
 #include "HappyMath/Ray.h"
+#include "HappyMath/Rectangle.h"
 #include <math.h>
 
 using namespace HappyMath;
@@ -92,4 +93,29 @@ void Frustum::SetFromAspectRatio(double aspectRatio, double hfovi, double nearCl
 	this->farClip = farClip;
 	this->hfovi = hfovi;
 	this->vfovi = 2.0 * atan(tan(hfovi / 2.0) / aspectRatio);
+}
+
+Ray Frustum::CalcViewSpaceRay(const Vector2& uvs) const
+{
+	Rectangle rect = this->CalcRectangleAtDepth(1.0);
+	Vector2 rectPoint = rect.PointFromUVs(uvs);
+	return Ray(Vector3(0.0, 0.0, 0.0), Vector3(rectPoint.x, rectPoint.y, -1.0).Normalized());
+}
+
+Rectangle Frustum::CalcRectangleAtDepth(double depth) const
+{
+	Rectangle rect;
+
+	rect.maxCorner.x = depth * tan(this->hfovi / 2.0);
+	rect.minCorner.x = -rect.maxCorner.x;
+	rect.maxCorner.y = depth * tan(this->vfovi / 2.0);
+	rect.minCorner.y = -rect.maxCorner.y;
+
+	return rect;
+}
+
+double Frustum::GetAspectRatio() const
+{
+	Rectangle rect = this->CalcRectangleAtDepth(1.0);
+	return rect.GetAspectRatio();
 }
