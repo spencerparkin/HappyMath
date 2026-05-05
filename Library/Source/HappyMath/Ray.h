@@ -101,6 +101,17 @@ namespace HappyMath
 		bool CastAgainstSphere(const Vector3& center, double radius, double& alpha) const;
 
 		/**
+		 * Cast this ray against the given disk.
+		 * 
+		 * @param[in] center The center of the disk.
+		 * @param[in] unitNormal The unit-length normal vector to the plane of the disk.
+		 * @param[in] radius The radius of the disk.
+		 * @param[out] alpha The distance from ray origin to the hit point, if any.
+		 * @return True is returned if the ray hits the disk; false, otherwise.
+		 */
+		bool CastAgainstDisk(const Vector3& center, const Vector3& unitNormal, double radius, double& alpha) const;
+
+		/**
 		 * Return a line segment joining the origin of this ray to a
 		 * point on this ray indicated by the given alpha value.
 		 * 

@@ -130,6 +130,18 @@ bool Ray::CastAgainstSphere(const Vector3& center, double radius, double& alpha)
 	return true;
 }
 
+bool Ray::CastAgainstDisk(const Vector3& center, const Vector3& unitNormal, double radius, double& alpha) const
+{
+	Plane plane(center, unitNormal);
+	if (!this->CastAgainst(plane, alpha))
+		return false;
+
+	Vector3 point = this->CalculatePoint(alpha);
+	Vector3 delta = point - center;
+	double distanceSquared = delta.Dot(delta);
+	return distanceSquared <= radius * radius;
+}
+
 void Ray::ToLineSegment(LineSegment& lineSegment, double alpha) const
 {
 	lineSegment.point[0] = this->origin;
