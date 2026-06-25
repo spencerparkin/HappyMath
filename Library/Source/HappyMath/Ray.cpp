@@ -75,6 +75,38 @@ bool Ray::CastAgainst(const Plane& plane, double& alpha) const
 	return alpha >= 0.0;
 }
 
+bool Ray::CastAgainst(const LineSegment& lineSegment, double& alpha, double eps /*= 1e-4*/) const
+{
+	Vector3 vectorA = lineSegment.point[1] - lineSegment.point[0];
+	Vector3 vectorB = this->origin - lineSegment.point[0];
+	Vector3 vectorC = this->unitDirection.Cross(vectorA);
+	Vector3 vectorD = vectorA.Cross(vectorB);
+
+	double vectorCLength = 0.0;
+	Vector3 unitVectorC = vectorC;
+	if (!unitVectorC.Normalize(&vectorCLength))
+		return false;
+
+	double vectorDLength = 0.0;
+	Vector3 unitVectorD = vectorD;
+	if (!unitVectorD.Normalize(&vectorDLength))
+		return false;
+
+	double squareLength = unitVectorC.Cross(unitVectorD).SquareLength();
+	if (squareLength > eps)
+		return false;
+
+	alpha = vectorDLength / vectorCLength;
+
+	Vector3 point = this->CalculatePoint(alpha);
+
+	double beta = 0.0;
+	if (!lineSegment.Alpha(point, beta, 0.5))
+		return false;
+
+	return beta >= 0.0 && beta <= 1.0;
+}
+
 bool Ray::CastAgainst(const AxisAlignedBoundingBox& box, Interval& interval, double borderThickness /*= 0.0*/) const
 {
 	std::vector<Plane> sidePlaneArray;

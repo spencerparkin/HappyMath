@@ -71,13 +71,18 @@ namespace HappyMath
 		 * Calculate and return the alpha value for the ray point of
 		 * this ray intersecting the given plane, if any.  If the ray
 		 * direction is orthogonal to the plane origin, then the ray
-		 * doesn't hit the plane unless the ray origin is ont he plane.
+		 * doesn't hit the plane unless the ray origin is on the plane.
 		 * 
 		 * @param[in] plane The plain against which to cast the ray.
 		 * @param[out] alpha The said alpha value is returned in this.
 		 * @return True is returned if the ray hits the plane; false, otherwise.
 		 */
 		bool CastAgainst(const Plane& plane, double& alpha) const;
+
+		/**
+		 * 
+		 */
+		bool CastAgainst(const LineSegment& lineSegment, double& alpha, double eps = 1e-4) const;
 
 		/**
 		 * Calculate and return the range of alpha values for this ray that
