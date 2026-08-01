@@ -461,6 +461,16 @@ namespace HappyMath
 		 */
 		void SetAsRandomDirection(Random& random);
 
+		/**
+		 * Set this vector to be of unit-length and in a random direction no further
+		 * than the given angle from the given center direction.
+		 * 
+		 * @param[in] random This is the random number generator to use.
+		 * @parma[in] centerUnitDirection This indicates the center axis of the cone for possible directions.
+		 * @param[in] maxDeviationAngle This indicates the half-angle of the cone.
+		 */
+		void SetAsRandomDirectionInCone(Random& random, const Vector3& centerUnitDirection, double maxDeviationAngle);
+
 	public:
 		double x, y, z;
 	};

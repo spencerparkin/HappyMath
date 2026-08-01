@@ -267,3 +267,20 @@ void Vector3::SetAsRandomDirection(Random& random)
 	coords.longitudeAngle = random.InRange(0.0, 2.0 * M_PI);
 	*this = coords.GetToVector();
 }
+
+void Vector3::SetAsRandomDirectionInCone(Random& random, const Vector3& centerUnitDirection, double maxDeviationAngle)
+{
+	Vector3 unitAxis;
+
+	// It is very unlikely that we generate an invalid axis, but loop in case we do.
+	do
+	{
+		Vector3 unitVector;
+		unitVector.SetAsRandomDirection(random);
+		unitAxis.Cross(centerUnitDirection, unitVector);
+	} while (!unitAxis.IsValid());
+
+	double randomAngle = random.InRange(0.0, maxDeviationAngle);
+
+	*this = centerUnitDirection.Rotated(unitAxis, randomAngle);
+}
