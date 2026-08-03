@@ -270,17 +270,18 @@ void Vector3::SetAsRandomDirection(Random& random)
 
 void Vector3::SetAsRandomDirectionInCone(Random& random, const Vector3& centerUnitDirection, double maxDeviationAngle)
 {
-	Vector3 unitAxis;
+	Vector3 xAxis, yAxis;
 
-	// It is very unlikely that we generate an invalid axis, but loop in case we do.
-	do
-	{
-		Vector3 unitVector;
-		unitVector.SetAsRandomDirection(random);
-		unitAxis.Cross(centerUnitDirection, unitVector);
-	} while (!unitAxis.IsValid());
+	xAxis.SetAsOrthogonalTo(centerUnitDirection);
+	xAxis.Normalize();
+	yAxis = centerUnitDirection.Cross(xAxis);
 
-	double randomAngle = random.InRange(0.0, maxDeviationAngle);
+	Vector3 axis = random.InRange(-1.0, 1.0) * xAxis + random.InRange(-1.0, 1.0) * yAxis;
+	axis.Normalize();
 
-	*this = centerUnitDirection.Rotated(unitAxis, randomAngle);
+	double angle = random.InRange(0.0, maxDeviationAngle);
+
+	*this = centerUnitDirection.Rotated(axis, angle);
+
+	this->Normalize();
 }
