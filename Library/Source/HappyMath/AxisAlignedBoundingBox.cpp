@@ -454,6 +454,12 @@ void AxisAlignedBoundingBox::SetFromSphere(const Vector3& center, double radius)
 	this->maxCorner = center - delta;
 }
 
+bool AxisAlignedBoundingBox::OverlapsSphere(const Vector3& center, double radius) const
+{
+	double squareDistance = this->CalcShortestSquareDistanceToPoint(center);
+	return squareDistance <= radius * radius;
+}
+
 void AxisAlignedBoundingBox::Integrate(std::function<void(const AxisAlignedBoundingBox& voxel)> callback, double voxelExtent) const
 {
 	double boxSizeX, boxSizeY, boxSizeZ;
@@ -480,6 +486,157 @@ void AxisAlignedBoundingBox::Integrate(std::function<void(const AxisAlignedBound
 			}
 		}
 	}
+}
+
+double AxisAlignedBoundingBox::CalcShortestSquareDistanceToPoint(const Vector3& point) const
+{
+	bool inXRange = (this->minCorner.x <= point.x && point.x <= this->maxCorner.x);
+	bool inYRange = (this->minCorner.y <= point.y && point.y <= this->maxCorner.y);
+	bool inZRange = (this->minCorner.z <= point.z && point.z <= this->maxCorner.z);
+
+	if (inXRange && inYRange)
+	{
+		double dz = 0.0;
+
+		if (point.z < this->minCorner.z)
+			dz = point.z - this->minCorner.z;
+		else if (point.z > this->maxCorner.z)
+			dz = point.z - this->maxCorner.z;
+
+		return dz * dz;
+	}
+	
+	if(inXRange && inZRange)
+	{
+		double dy = 0.0;
+
+		if (point.y < this->minCorner.y)
+			dy = point.y - this->minCorner.y;
+		else if (point.y > this->maxCorner.y)
+			dy = point.y - this->maxCorner.y;
+
+		return dy * dy;
+	}
+	
+	if (inYRange && inZRange)
+	{
+		double dx = 0.0;
+
+		if (point.x < this->minCorner.x)
+			dx = point.x - this->minCorner.x;
+		else if (point.x > this->maxCorner.x)
+			dx = point.x - this->maxCorner.x;
+
+		return dx * dx;
+	}
+
+	if (inXRange)
+	{
+		double dy = 0.0;
+		double dz = 0.0;
+
+		if (point.y < this->minCorner.y && point.z < this->minCorner.z)
+		{
+			dy = point.y - this->minCorner.y;
+			dz = point.z - this->minCorner.z;
+		}
+		else if (point.y > this->maxCorner.y && point.z < this->minCorner.z)
+		{
+			dy = point.y - this->maxCorner.y;
+			dz = point.z - this->minCorner.z;
+		}
+		else if (point.y < this->minCorner.y && point.z > this->maxCorner.z)
+		{
+			dy = point.y - this->minCorner.y;
+			dz = point.z - this->maxCorner.z;
+		}
+		else if (point.y > this->maxCorner.y && point.z > this->maxCorner.z)
+		{
+			dy = point.y - this->maxCorner.y;
+			dz = point.z - this->maxCorner.z;
+		}
+
+		return dy * dy + dz * dz;
+	}
+
+	if (inYRange)
+	{
+		double dx = 0.0;
+		double dz = 0.0;
+
+		if (point.x < this->minCorner.x && point.z < this->minCorner.z)
+		{
+			dx = point.x - this->minCorner.x;
+			dz = point.z - this->minCorner.z;
+		}
+		else if (point.x > this->maxCorner.x && point.z < this->minCorner.z)
+		{
+			dx = point.x - this->maxCorner.x;
+			dz = point.z - this->minCorner.z;
+		}
+		else if (point.x < this->minCorner.x && point.z > this->maxCorner.z)
+		{
+			dx = point.x - this->minCorner.x;
+			dz = point.z - this->maxCorner.z;
+		}
+		else if (point.x > this->maxCorner.x && point.z > this->maxCorner.z)
+		{
+			dx = point.x - this->maxCorner.x;
+			dz = point.z - this->maxCorner.z;
+		}
+
+		return dx * dx + dz * dz;
+	}
+
+	if (inZRange)
+	{
+		double dx = 0.0;
+		double dy = 0.0;
+
+		if (point.x < this->minCorner.x && point.y < this->minCorner.y)
+		{
+			dx = point.x - this->minCorner.x;
+			dy = point.y - this->minCorner.y;
+		}
+		else if (point.x > this->maxCorner.x && point.y < this->minCorner.y)
+		{
+			dx = point.x - this->maxCorner.x;
+			dy = point.y - this->minCorner.y;
+		}
+		else if (point.x < this->minCorner.x && point.y > this->maxCorner.y)
+		{
+			dx = point.x - this->minCorner.x;
+			dy = point.y - this->maxCorner.y;
+		}
+		else if (point.x > this->maxCorner.x && point.y > this->maxCorner.y)
+		{
+			dx = point.x - this->maxCorner.x;
+			dy = point.y - this->maxCorner.y;
+		}
+
+		return dx * dx + dy * dy;
+	}
+
+	double dx = 0.0;
+	double dy = 0.0;
+	double dz = 0.0;
+
+	if (point.x < this->minCorner.x)
+		dx = point.x - this->minCorner.x;
+	else
+		dx = point.x - this->maxCorner.x;
+
+	if (point.y < this->minCorner.y)
+		dy = point.y - this->minCorner.y;
+	else
+		dy = point.y - this->maxCorner.y;
+
+	if (point.z < this->minCorner.z)
+		dz = point.z - this->minCorner.z;
+	else
+		dz = point.z - this->maxCorner.z;
+
+	return dx * dx + dy * dy + dz * dz;
 }
 
 void AxisAlignedBoundingBox::Dump(std::ostream& stream) const

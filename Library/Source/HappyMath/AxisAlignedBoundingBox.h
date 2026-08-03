@@ -228,6 +228,15 @@ namespace HappyMath
 		void SetFromSphere(const Vector3& center, double radius);
 
 		/**
+		 * Tell us if this AABB overlaps the given sphere.
+		 * 
+		 * @param[in] center This is the center of the sphere in question.
+		 * @param[in] radius This is the radius of the sphere in question.
+		 * @return True is returned if and only if the sphere and this AABB share a point.
+		 */
+		bool OverlapsSphere(const Vector3& center, double radius) const;
+
+		/**
 		 * Calculate and return the point on this box's boundary that is closest
 		 * to the given point.
 		 */
@@ -249,6 +258,12 @@ namespace HappyMath
 		 * this box one little voxel at a time.
 		 */
 		void Integrate(std::function<void(const AxisAlignedBoundingBox& voxel)> callback, double voxelExtent) const;
+
+		/**
+		 * Calculate and return the shortest square distance from the given point to this box.
+		 * Of course, if the point is in the box, then zero is returned.
+		 */
+		double CalcShortestSquareDistanceToPoint(const Vector3& point) const;
 
 		/**
 		 * Write this AABB to the given stream in binary form.
