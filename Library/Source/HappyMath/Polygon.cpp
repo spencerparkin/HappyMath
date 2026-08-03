@@ -20,6 +20,11 @@ Polygon::Polygon(const Polygon& polygon)
 	*this = polygon;
 }
 
+Polygon::Polygon(Polygon&& polygon) noexcept
+{
+	this->vertexArray = std::move(polygon.vertexArray);
+}
+
 /*virtual*/ Polygon::~Polygon()
 {
 }

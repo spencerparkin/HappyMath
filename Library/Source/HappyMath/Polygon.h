@@ -35,6 +35,7 @@ namespace HappyMath
 	public:
 		Polygon();
 		Polygon(const Polygon& polygon);
+		Polygon(Polygon&& polygon) noexcept;
 		virtual ~Polygon();
 
 		void operator=(const Polygon& polygon);
