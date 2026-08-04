@@ -5,6 +5,8 @@ set(HAPPY_MATH_SOURCES
 	Source/HappyMath/AnimTransform.h
 	Source/HappyMath/AxisAlignedBoundingBox.cpp
 	Source/HappyMath/AxisAlignedBoundingBox.h
+	Source/HappyMath/BoxTree.cpp
+	Source/HappyMath/BoxTree.h
 	Source/HappyMath/Common.h
 	Source/HappyMath/ExpandingPolytopeAlgorithm.cpp
 	Source/HappyMath/ExpandingPolytopeAlgorithm.h

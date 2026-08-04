@@ -297,6 +297,68 @@ void Graph::DeleteNode(Node* node, Node* alternativeNode /*= nullptr*/)
 	delete node;
 }
 
+void Graph::AddNode(Node* node)
+{
+	node->i = (int)this->nodeArray.size();
+	this->nodeArray.push_back(node);
+}
+
+bool Graph::AddVerticesToBoxTree(BoxTree& boxTree)
+{
+	this->AssignIndicesForNodes();
+
+	AxisAlignedBoundingBox boundingBox;
+	boundingBox.MakeReadyForExpansion();
+
+	for (Node* node : this->nodeArray)
+		boundingBox.Expand(node->vertex);
+
+	boundingBox.Scale(1.2);
+
+	boxTree.Reset(boundingBox, boundingBox.GetVolume() / 32.0);
+
+	for (Node* node : this->nodeArray)
+	{
+		auto nodeObject = std::make_shared<NodeObject>(this, node->i);
+		if (!boxTree.InsertObject(nodeObject))
+			return false;
+	}
+
+	return true;
+}
+
+//--------------------------------- Graph::NodeObject ---------------------------------
+
+Graph::NodeObject::NodeObject(Graph* graph, int i)
+{
+	this->graph = graph;
+	this->i = i;
+}
+
+/*virtual*/ Graph::NodeObject::~NodeObject()
+{
+}
+
+/*virtual*/ AxisAlignedBoundingBox Graph::NodeObject::GetMinimalBoundingBox() const
+{
+	return AxisAlignedBoundingBox(this->GetNode()->GetVertex());
+}
+
+/*virtual*/ bool Graph::NodeObject::OverlapsSphere(const Vector3& center, double radius) const
+{
+	return (this->GetNode()->GetVertex() - center).SquareLength() <= radius * radius;
+}
+
+/*virtual*/ double Graph::NodeObject::CalcSquareDistanceToPoint(const Vector3& point) const
+{
+	return (this->GetNode()->GetVertex() - point).SquareLength();
+}
+
+const Graph::Node* Graph::NodeObject::GetNode() const
+{
+	return this->graph->GetNode(this->i);
+}
+
 //--------------------------------- Graph::Node ---------------------------------
 
 Graph::Node::Node()

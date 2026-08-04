@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HappyMath/Vector3.h"
+#include "HappyMath/BoxTree.h"
 #include <set>
 
 namespace HappyMath
@@ -74,6 +75,13 @@ namespace HappyMath
 		 * alternative node.
 		 */
 		void DeleteNode(Node* node, Node* alternativeNode = nullptr);
+
+		/**
+		 * Add the given node to this graph.  Nothing is done to link it up.
+		 * 
+		 * @param[in] node The user should provide a node allocated on the heap.  This class takes ownership of the memory.
+		 */
+		void AddNode(Node* node);
 
 		/**
 		 * These are not part of the graph data-structure, but can sometimes
@@ -194,6 +202,38 @@ namespace HappyMath
 			mutable int i;
 			std::set<Node*> adjacentNodeSet;
 		};
+
+		/**
+		 * This class lets us put the graph nodes (vertices) in a box-tree for
+		 * accelerated searching purposes.
+		 */
+		class NodeObject : public BoxTree::Object
+		{
+		public:
+			NodeObject(Graph* graph, int i);
+			virtual ~NodeObject();
+
+			virtual AxisAlignedBoundingBox GetMinimalBoundingBox() const override;
+			virtual bool OverlapsSphere(const Vector3& center, double radius) const override;
+			virtual double CalcSquareDistanceToPoint(const Vector3& point) const override;
+
+			const Node* GetNode() const;
+
+		private:
+			Graph* graph;
+			int i;
+		};
+
+		/**
+		 * Once all vertices of this graph are added to a box tree, the box tree can
+		 * be used to do accelerated searches against the graph's vertices.
+		 * 
+		 * Note that the graph must remain in scope as long as the box-tree is in use.
+		 * Otherwise, the box-tree will hang on to stale pointers.  Also the graph
+		 * should not be changed as long as the box-tree is in use.  Changing the graph
+		 * will invalidate the box-tree.
+		 */
+		bool AddVerticesToBoxTree(BoxTree& boxTree);
 
 		const Node* GetNode(int i) const { return this->nodeArray[i]; }
 		int GetNumNodes() const { return (int)this->nodeArray.size(); }
