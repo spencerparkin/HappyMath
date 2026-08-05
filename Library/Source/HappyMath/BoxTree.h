@@ -8,7 +8,8 @@ namespace HappyMath
 {
 	/**
 	 * This is a spacial-sorting data-structure that can be used to accelerate
-	 * some questions about the space and the objects in it.
+	 * some questions about the space and the objects in it.  I think it has
+	 * some weaknesses, but it can be beneficial.
 	 */
 	class HAPPY_MATH_API BoxTree
 	{

@@ -4,6 +4,7 @@
 #include "HappyMath/Function.h"
 #include <map>
 #include <algorithm>
+#include <assert.h>
 
 using namespace HappyMath;
 
@@ -322,6 +323,98 @@ bool Graph::AddVerticesToBoxTree(BoxTree& boxTree)
 		auto nodeObject = std::make_shared<NodeObject>(this, node->i);
 		if (!boxTree.InsertObject(nodeObject))
 			return false;
+	}
+
+	return true;
+}
+
+bool Graph::AutoCompleteEdges(double localityRadius, int maxDegree)
+{
+	BoxTree boxTree;
+
+	if (!this->AddVerticesToBoxTree(boxTree))
+		return false;
+
+	std::set<UnorderedEdge, UnorderedEdge> edgeSet;
+
+	for (Node* node : this->nodeArray)
+	{
+		std::vector<std::shared_ptr<BoxTree::Object>> objectArray;
+		if (!boxTree.FindObjectsOverlappingSphere(node->vertex, localityRadius, objectArray))
+			continue;
+
+		std::vector<Node*> localNodesArray;
+		for (auto object : objectArray)
+		{
+			NodeObject* nodeObject = (NodeObject*)object.get();
+			Node* localNode = const_cast<Node*>(nodeObject->GetNode());
+			if (localNode != node)
+				localNodesArray.push_back(localNode);
+		}
+
+		std::sort(localNodesArray.begin(), localNodesArray.end(), [node](const Node* nodeA, const Node* nodeB) -> int
+			{
+				double squareDistanceA = (node->vertex - nodeA->vertex).SquareLength();
+				double squareDistanceB = (node->vertex - nodeB->vertex).SquareLength();
+
+				return squareDistanceA < squareDistanceB;
+			});
+
+		for (int i = 0; i < maxDegree && i < (int)localNodesArray.size(); i++)
+		{
+			Node* localNode = localNodesArray[i];
+			UnorderedEdge edge(node->i, localNode->i);
+			if (edgeSet.find(edge) != edgeSet.end())
+				continue;
+
+			if (node->adjacentNodeSet.size() >= 2)
+			{
+				double largestAngle = -std::numeric_limits<double>::max();
+				double smallestAngle = std::numeric_limits<double>::max();
+
+				Node* immediateNodeCCW = nullptr;
+				Node* immediateNodeCW = nullptr;
+
+				Vector3 vectorA = (localNode->vertex - node->vertex).RejectedFrom(node->normal).Normalized();
+
+				for (Node* adjacentNode : node->adjacentNodeSet)
+				{
+					Vector3 vectorB = (adjacentNode->vertex - node->vertex).RejectedFrom(node->normal).Normalized();
+
+					double angle = vectorA.AngleBetween(vectorB, node->normal);
+
+					if (angle > largestAngle)
+					{
+						largestAngle = angle;
+						immediateNodeCW = adjacentNode;
+					}
+
+					if (angle < smallestAngle)
+					{
+						smallestAngle = angle;
+						immediateNodeCCW = adjacentNode;
+					}
+				}
+
+				assert(immediateNodeCCW && immediateNodeCW);
+				
+				if (immediateNodeCCW != immediateNodeCW)
+				{
+					double angle = smallestAngle + (2.0 * M_PI - largestAngle);
+
+					if (angle < M_PI && immediateNodeCCW->IsAdjacentTo(immediateNodeCW))
+					{
+						// Don't make the connection, because this breaks and/or crosses an existing triangle in the mesh.
+						continue;
+					}
+				}
+			}
+
+			node->adjacentNodeSet.insert(localNode);
+			localNode->adjacentNodeSet.insert(node);
+
+			edgeSet.insert(edge);
+		}
 	}
 
 	return true;

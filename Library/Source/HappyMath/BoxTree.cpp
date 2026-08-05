@@ -119,16 +119,13 @@ bool BoxTree::Node::FindObjectsOverlappingSphere(const Vector3& center, double r
 
 	for (int i = 0; i < 2; i++)
 	{
-		if (this->node[i]->boundingBox.OverlapsSphere(center, radius))
+		if (this->node[i] && this->node[i]->boundingBox.OverlapsSphere(center, radius))
 		{
-			if (!this->node[i]->FindObjectsOverlappingSphere(center, radius, objectArray))
-			{
-				return false;
-			}
+			this->node[i]->FindObjectsOverlappingSphere(center, radius, objectArray);
 		}
 	}
 
-	return true;
+	return objectArray.size() > 0;
 }
 
 std::shared_ptr<BoxTree::Object> BoxTree::Node::FindClosestObjectToPoint(const Vector3& point, double& foundSquareDistance)
