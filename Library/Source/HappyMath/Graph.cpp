@@ -160,7 +160,7 @@ bool Graph::FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray)
 	do
 	{
 		for (int i : cycleArray)
-			if (cycleArray[i] == node->i)
+			if (i == node->i)
 				return false;
 
 		cycleArray.push_back(node->i);
