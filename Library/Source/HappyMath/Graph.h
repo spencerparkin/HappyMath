@@ -49,7 +49,7 @@ namespace HappyMath
 		 * Construct a polygon mesh from this graph.  Cycles in this
 		 * graph become polygons of the mesh.
 		 */
-		bool ToPolygonMesh(PolygonMesh& mesh) const;
+		bool ToPolygonMesh(PolygonMesh& mesh, std::function<void(double)> progressCallback = {}) const;
 
 		/**
 		 * Construct a polygon mesh from this graph, but also destroy
@@ -57,7 +57,7 @@ namespace HappyMath
 		 * is made here to ensure that the resulting polygons are valid
 		 * in the sense that their vertices are all coplanar.
 		 */
-		bool ToPolygonMesh(PolygonMesh& mesh);
+		bool ToPolygonMesh(PolygonMesh& mesh, std::function<void(double)> progressCallback = {});
 
 		/**
 		 * Uniformly(?) merge adjacent vertices of the mesh until the given
@@ -245,7 +245,7 @@ namespace HappyMath
 		 * If we do our job right here, then we add edges to complete the sphere as
 		 * a wire-frame object.
 		 */
-		bool AutoCompleteEdges(double localityRadius, int maxDegree);
+		bool AutoCompleteEdges(double localityRadius, int maxDegree, std::function<void(double)> progressCallback = {});
 
 		const Node* GetNode(int i) const { return this->nodeArray[i]; }
 		int GetNumNodes() const { return (int)this->nodeArray.size(); }
@@ -266,7 +266,7 @@ namespace HappyMath
 		 * This is used in the graph to mesh conversion process, and
 		 * it is destructive to the graph.
 		 */
-		bool FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray);
+		bool FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray, int& numEdgesRemoved);
 
 	private:
 		std::vector<Node*> nodeArray;

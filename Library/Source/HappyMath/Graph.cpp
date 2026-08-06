@@ -104,24 +104,36 @@ bool Graph::FromPolygohMesh(const PolygonMesh& mesh)
 	return true;
 }
 
-bool Graph::ToPolygonMesh(PolygonMesh& mesh) const
+bool Graph::ToPolygonMesh(PolygonMesh& mesh, std::function<void(double)> progressCallback /*= {}*/) const
 {
 	Graph graph = *this;
-	return graph.ToPolygonMesh(mesh);
+	return graph.ToPolygonMesh(mesh, progressCallback);
 }
 
-bool Graph::ToPolygonMesh(PolygonMesh& mesh)
+bool Graph::ToPolygonMesh(PolygonMesh& mesh, std::function<void(double)> progressCallback /*= {}*/)
 {
 	mesh.Clear();
 
+	int totalEdges = 0;
+	int totalEdgesRemoved = 0;
+
 	for (const Node* node : this->nodeArray)
+	{
 		mesh.AddVertex(node->vertex);
+		totalEdges += (int)node->adjacentNodeSet.size();
+	}
 
 	this->AssignIndicesForNodes();
 
 	PolygonMesh::Polygon polygon;
-	while (this->FindAndRemovePolygonCycleForMesh(polygon.vertexArray))
+	int numEdgesRemoved = 0;
+	while (this->FindAndRemovePolygonCycleForMesh(polygon.vertexArray, numEdgesRemoved))
+	{
 		mesh.AddPolygon(polygon);
+		totalEdgesRemoved += numEdgesRemoved;
+		if (progressCallback)
+			progressCallback(double(totalEdgesRemoved) / double(totalEdges));
+	}
 
 	for (const Node* node : this->nodeArray)
 		if (node->GetNumAdjacencies() > 0)
@@ -136,8 +148,10 @@ void Graph::AssignIndicesForNodes() const
 		this->nodeArray[i]->i = i;
 }
 
-bool Graph::FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray)
+bool Graph::FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray, int& numEdgesRemoved)
 {
+	numEdgesRemoved = 0;
+
 	cycleArray.clear();
 
 	Node* initialNode = nullptr;
@@ -159,10 +173,6 @@ bool Graph::FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray)
 
 	do
 	{
-		for (int i : cycleArray)
-			if (i == node->i)
-				return false;
-
 		cycleArray.push_back(node->i);
 
 		if (node->adjacentNodeSet.size() == 0)
@@ -175,10 +185,13 @@ bool Graph::FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray)
 			double smallestAngle = std::numeric_limits<double>::max();
 			for (Node* adjacentNode : node->adjacentNodeSet)
 			{
+				if (adjacentNode == nodeIn)
+					continue;
+
 				nodeOut = adjacentNode;
 				Vector3 vectorOut = (nodeOut->vertex - node->vertex).RejectedFrom(node->normal).Normalized();
 				double angle = vectorOut.AngleBetween(vectorIn, node->normal);
-				if (angle > smallestAngle)
+				if (angle < smallestAngle)
 				{
 					smallestAngle = angle;
 					chosenNode = nodeOut;
@@ -191,6 +204,8 @@ bool Graph::FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray)
 		nodeIn = node;
 		node = nodeOut;
 		nodeOut = nullptr;
+
+		numEdgesRemoved++;
 	} while (node->i != initialNode->i);
 
 	return true;
@@ -328,7 +343,7 @@ bool Graph::AddVerticesToBoxTree(BoxTree& boxTree)
 	return true;
 }
 
-bool Graph::AutoCompleteEdges(double localityRadius, int maxDegree)
+bool Graph::AutoCompleteEdges(double localityRadius, int maxDegree, std::function<void(double)> progressCallback /*= {}*/)
 {
 	BoxTree boxTree;
 
@@ -337,8 +352,13 @@ bool Graph::AutoCompleteEdges(double localityRadius, int maxDegree)
 
 	std::set<UnorderedEdge, UnorderedEdge> edgeSet;
 
-	for (Node* node : this->nodeArray)
+	for (int i = 0; i < (int)this->nodeArray.size(); i++)
 	{
+		if (progressCallback)
+			progressCallback(double(i) / double(this->nodeArray.size() - 1));
+
+		Node* node = this->nodeArray[i];
+
 		std::vector<std::shared_ptr<BoxTree::Object>> objectArray;
 		if (!boxTree.FindObjectsOverlappingSphere(node->vertex, localityRadius, objectArray))
 			continue;
