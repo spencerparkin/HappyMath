@@ -238,15 +238,6 @@ namespace HappyMath
 		 */
 		bool AddVerticesToBoxTree(BoxTree& boxTree);
 
-		/**
-		 * The idea here is that if the graph has vertices, but no edges, then see
-		 * if we can add edges to the graph that "make sense."  Exactly what this
-		 * means is hard to pin down.  Think of vertices that clearly show a sphere.
-		 * If we do our job right here, then we add edges to complete the sphere as
-		 * a wire-frame object.
-		 */
-		bool AutoCompleteEdges(double localityRadius, int maxDegree, std::function<void(double)> progressCallback = {});
-
 		const Node* GetNode(int i) const { return this->nodeArray[i]; }
 		int GetNumNodes() const { return (int)this->nodeArray.size(); }
 
