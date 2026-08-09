@@ -117,6 +117,13 @@ namespace HappyMath
 		bool CastAgainstDisk(const Vector3& center, const Vector3& unitNormal, double radius, double& alpha) const;
 
 		/**
+		 * Tell the caller if this ray hits or originates inside the given AABB.
+		 *
+		 * @return True is returned if any part of this ray intersects the given box; false, otherwise.
+		 */
+		bool HitsOrOriginatesIn(const AxisAlignedBoundingBox& box) const;
+
+		/**
 		 * Return a line segment joining the origin of this ray to a
 		 * point on this ray indicated by the given alpha value.
 		 * 

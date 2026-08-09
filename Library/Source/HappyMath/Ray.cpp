@@ -174,6 +174,15 @@ bool Ray::CastAgainstDisk(const Vector3& center, const Vector3& unitNormal, doub
 	return distanceSquared <= radius * radius;
 }
 
+bool Ray::HitsOrOriginatesIn(const AxisAlignedBoundingBox& box) const
+{
+	if (box.ContainsPoint(this->origin))
+		return true;
+
+	Interval interval;
+	return this->CastAgainst(box, interval);
+}
+
 void Ray::ToLineSegment(LineSegment& lineSegment, double alpha) const
 {
 	lineSegment.point[0] = this->origin;
