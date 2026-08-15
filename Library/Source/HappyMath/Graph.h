@@ -7,6 +7,7 @@
 namespace HappyMath
 {
 	class PolygonMesh;
+	class Surface;
 
 	/**
 	 * These are directed graphs of points in 3D space.  We associate a
@@ -58,6 +59,16 @@ namespace HappyMath
 		 * in the sense that their vertices are all coplanar.
 		 */
 		bool ToPolygonMesh(PolygonMesh& mesh, std::function<void(double)> progressCallback = {});
+
+		/**
+		 * Construct a graph as a function of the given surface.  The goal is
+		 * make sure that all cycles are triangles.
+		 * 
+		 * @param[in] surface All vertices of the graph will be on this surface.
+		 * @param[in] minDegree All vertices will have at least this many connected edges.
+		 * @param[in] maxEdgeLength No edge will exceed this in length.
+		 */
+		bool FromSurface(const Surface* surface, int minDegree, double maxEdgeLength);
 
 		/**
 		 * Uniformly(?) merge adjacent vertices of the mesh until the given

@@ -2,6 +2,7 @@
 #include "HappyMath/PolygonMesh.h"
 #include "HappyMath/Polygon.h"
 #include "HappyMath/Function.h"
+#include "HappyMath/Surface.h"
 #include <map>
 #include <algorithm>
 #include <assert.h>
@@ -247,6 +248,15 @@ bool Graph::ReduceEdgeCount(int numEdgesToRemove)
 	}
 
 	return numEdgesToRemove == 0;
+}
+
+bool Graph::FromSurface(const Surface* surface, int minDegree, double maxEdgeLength)
+{
+	// STPTODO: Maybe use a box tree here.  Can we get bounds for the surface to init the box tree?
+
+	//surface->
+
+	return false;
 }
 
 double Graph::CalcEdgeLength(const Edge& edge) const

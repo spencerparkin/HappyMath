@@ -48,6 +48,8 @@ set(HAPPY_MATH_SOURCES
 	Source/HappyMath/SphericalCoords.h
 	Source/HappyMath/StackHeap.cpp
 	Source/HappyMath/StackHeap.h
+	Source/HappyMath/Surface.cpp
+	Source/HappyMath/Surface.h
 	Source/HappyMath/Transform.cpp
 	Source/HappyMath/Transform.h
 	Source/HappyMath/Vector2.cpp
