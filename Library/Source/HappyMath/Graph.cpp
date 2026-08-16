@@ -367,6 +367,8 @@ bool Graph::FromSurface(const Surface* surface, int minDegree, double walkDistan
 	}
 
 	// STPTODO: Maybe now we delete any edges that cross other edges illegally?
+	//          The algorithm above, I believe, does not prevent the case where two
+	//          edges might cross one another.  Or maybe it does?  I'm not entirely sure.
 
 	return true;
 }
