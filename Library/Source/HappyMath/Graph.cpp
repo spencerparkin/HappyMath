@@ -342,7 +342,7 @@ bool Graph::FromSurface(const Surface* surface, int minDegree, double walkDistan
 
 			double smallestSquareDistance = 0.0;
 			Node* existingNode = this->FindClosestNode(tentativeNode->vertex, smallestSquareDistance);	// STPTODO: A box tree could possibly speed this up.
-			if (existingNode && (existingNode->vertex - tentativeNode->vertex).Length() < walkDistance)
+			if (existingNode && existingNode != node && (existingNode->vertex - tentativeNode->vertex).Length() < walkDistance)
 			{
 				newAdjacentNode = existingNode;
 			}
