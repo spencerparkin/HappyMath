@@ -95,6 +95,19 @@ namespace HappyMath
 		bool ContainsInteriorPoint(const Vector3& point, double tolerance = 1e-6) const;
 
 		/**
+		 * Parameterizing each line segments as a line with infinite length, find the parameter
+		 * (alpha or beta) that locates the point on the line closest to the other.
+		 */
+		static bool CalcLineSegmentCrossingAlphaBeta(const LineSegment& lineSegmentA, const LineSegment& lineSegmentB, double& alpha, double& beta);
+
+		/**
+		 * For line segments that don't necessarily live in the same plane, but are close-ish,
+		 * tell us if they "cross" when viewed in the approximate plane containing both.
+		 * If they do live in the same plane, then this answers the question exactly.
+		 */
+		static bool LineSegmentsCross(const LineSegment& lineSegmentA, const LineSegment& lineSegmentB);
+
+		/**
 		 * Set this line segment as the shortest line segment connecting the two given line segments.
 		 * Note that we can fail here in cases where there is no single shortest connector.  For example,
 		 * consider two distinct yet parallel line-segments, side-by-side.  Many shortest connectors

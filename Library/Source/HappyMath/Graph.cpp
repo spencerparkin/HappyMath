@@ -250,13 +250,143 @@ bool Graph::ReduceEdgeCount(int numEdgesToRemove)
 	return numEdgesToRemove == 0;
 }
 
-bool Graph::FromSurface(const Surface* surface, int minDegree, double maxEdgeLength)
+bool Graph::FromSurface(const Surface* surface, int minDegree, double walkDistance, const Vector3& probePoint)
 {
-	// STPTODO: Maybe use a box tree here.  Can we get bounds for the surface to init the box tree?
+	if (walkDistance <= 0.0 || !surface || minDegree < 2)
+		return false;
 
-	//surface->
+	this->Clear();
 
-	return false;
+	Node* node = new Node();
+	this->nodeArray.push_back(node);
+
+	if (!surface->FindNearestPoint(probePoint, node->vertex, node->normal))
+		return false;
+
+	std::set<Node*> nodeQueue;
+	nodeQueue.insert(node);
+
+	while (nodeQueue.size() > 0)
+	{
+		node = *nodeQueue.begin();
+		nodeQueue.erase(node);
+
+		while (node->adjacentNodeSet.size() < minDegree)
+		{
+			// Determine which direction we should try to travel along the surface from the node.
+			Vector3 unitTangentDirection;
+			switch (node->adjacentNodeSet.size())
+			{
+				case 0:
+				{
+					unitTangentDirection.SetAsOrthogonalTo(node->normal);
+					break;
+				}
+				case 1:
+				{
+					Node* adjacentNode = *node->adjacentNodeSet.begin();
+					unitTangentDirection = (node->vertex - adjacentNode->vertex).RejectedFrom(node->normal);
+					break;
+				}
+				default:
+				{
+					Vector3 anchorDirection;
+					anchorDirection.SetAsOrthogonalTo(node->normal);
+					anchorDirection.Normalize();
+
+					std::vector<Vector3> unitTangentDirectionArray;
+					for (Node* adjacentNode : node->adjacentNodeSet)
+						unitTangentDirectionArray.push_back((adjacentNode->vertex - node->vertex).RejectedFrom(node->normal).Normalized());
+
+					std::sort(unitTangentDirectionArray.begin(), unitTangentDirectionArray.end(), [node, &anchorDirection](const Vector3& unitDirA, const Vector3& unitDirB) -> bool
+						{
+							double angleA = anchorDirection.AngleBetween(unitDirA, node->normal);
+							double angleB = anchorDirection.AngleBetween(unitDirB, node->normal);
+							return angleA < angleB;
+						});
+
+					double largestAngle = -1.0;
+					for (int i = 0; i < (int)unitTangentDirectionArray.size(); i++)
+					{
+						int j = (i + 1) % unitTangentDirectionArray.size();
+						const Vector3& unitTangentDirA = unitTangentDirectionArray[i];
+						const Vector3& unitTangentDirB = unitTangentDirectionArray[j];
+						double angle = unitTangentDirA.AngleBetween(unitTangentDirB, node->normal);
+						if (angle > largestAngle)
+						{
+							largestAngle = angle;
+							unitTangentDirection = unitTangentDirA.Rotated(node->normal, angle / 2.0);
+						}
+					}
+
+					break;
+				}
+			}
+
+			if (!unitTangentDirection.Normalize())
+				return false;
+
+			// Go in the direction of the tangent and probe the surface.
+			Ray ray;
+			ray.origin = node->vertex + unitTangentDirection * walkDistance;
+			ray.unitDirection = -node->normal;
+			std::unique_ptr<Node> tentativeNode(new Node());
+			bool surfacePointFound = surface->RayCast(ray, tentativeNode->vertex, tentativeNode->normal);
+
+			// If not found, then we're at a boundary point of the surface.
+			// Be done, even if we haven't reached our minimum degree.
+			if (!surfacePointFound)
+				break;
+			
+			Node* newAdjacentNode = nullptr;
+
+			double smallestSquareDistance = 0.0;
+			Node* existingNode = this->FindClosestNode(tentativeNode->vertex, smallestSquareDistance);	// STPTODO: A box tree could possibly speed this up.
+			if (existingNode && (existingNode->vertex - tentativeNode->vertex).Length() < walkDistance)
+			{
+				newAdjacentNode = existingNode;
+			}
+			else
+			{
+				this->nodeArray.push_back(tentativeNode.get());
+				nodeQueue.insert(tentativeNode.get());
+				newAdjacentNode = tentativeNode.release();
+			}
+
+			// Again, here we may be, approximately, at a boundary-point of the surface.
+			if (!newAdjacentNode)
+				break;
+
+			// We have to break out in this case or we'll loop indefinitely.
+			if (node->IsAdjacentTo(newAdjacentNode))
+				break;
+			
+			node->adjacentNodeSet.insert(newAdjacentNode);
+			newAdjacentNode->adjacentNodeSet.insert(node);
+		}
+	}
+
+	// STPTODO: Maybe now we delete any edges that cross other edges illegally?
+
+	return true;
+}
+
+Graph::Node* Graph::FindClosestNode(const Vector3& vertex, double& smallestSquareDistance)
+{
+	Node* foundNode = nullptr;
+	smallestSquareDistance = std::numeric_limits<double>::max();
+
+	for (Node* node : this->nodeArray)
+	{
+		double squareDistance = (node->vertex - vertex).SquareLength();
+		if (squareDistance < smallestSquareDistance)
+		{
+			smallestSquareDistance = squareDistance;
+			foundNode = node;
+		}
+	}
+
+	return foundNode;
 }
 
 double Graph::CalcEdgeLength(const Edge& edge) const
@@ -353,6 +483,44 @@ bool Graph::AddVerticesToBoxTree(BoxTree& boxTree)
 	return true;
 }
 
+void Graph::Dump(std::ostream& stream) const
+{
+	this->AssignIndicesForNodes();
+
+	int size = (int)this->nodeArray.size();
+	stream.write((char*)&size, sizeof(size));
+
+	for (const Node* node : this->nodeArray)
+		node->Dump(stream);
+}
+
+void Graph::Restore(std::istream& stream)
+{
+	this->Clear();
+
+	int size = -1;
+	stream.read((char*)&size, sizeof(size));
+
+	for (int i = 0; i < size; i++)
+	{
+		Node* node = new Node();
+		this->nodeArray.push_back(node);
+		node->Restore(stream);
+	}
+
+	for (Node* node : this->nodeArray)
+	{
+		std::vector<int> offsetArray;
+		for (Node* adjacentNode : node->adjacentNodeSet)
+			offsetArray.push_back((int)(uintptr_t)adjacentNode);
+
+		node->adjacentNodeSet.clear();
+
+		for (int i : offsetArray)
+			node->adjacentNodeSet.insert(this->nodeArray[i]);
+	}
+}
+
 //--------------------------------- Graph::NodeObject ---------------------------------
 
 Graph::NodeObject::NodeObject(Graph* graph, int i)
@@ -417,4 +585,35 @@ Graph::Node* Graph::Node::FindAdjacencyInDirection(const Vector3& unitDirection)
 	}
 
 	return foundNode;
+}
+
+void Graph::Node::Dump(std::ostream& stream) const
+{
+	this->vertex.Dump(stream);
+	this->normal.Dump(stream);
+
+	int size = (int)this->adjacentNodeSet.size();
+	stream.write((char*)&size, sizeof(size));
+
+	for (const Node* node : this->adjacentNodeSet)
+		stream.write((char*)&node->i, sizeof(node->i));
+}
+
+void Graph::Node::Restore(std::istream& stream)
+{
+	this->vertex.Restore(stream);
+	this->normal.Restore(stream);
+
+	int size = 0;
+	stream.read((char*)&size, sizeof(size));
+
+	this->adjacentNodeSet.clear();
+	for (int i = 0; i < size; i++)
+	{
+		int j = -1;
+		stream.read((char*)&j, sizeof(j));
+
+		// These pointers will get patched by the caller.
+		this->adjacentNodeSet.insert((Node*)(uintptr_t)j);
+	}
 }

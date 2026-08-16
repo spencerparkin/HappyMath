@@ -137,7 +137,7 @@ bool LineSegment::ContainsInteriorPoint(const Vector3& point, double tolerance /
 	return this->ContainsPoint(point, &isInterior, tolerance) && isInterior;
 }
 
-bool LineSegment::SetAsShortestConnector(const LineSegment& lineSegmentA, const LineSegment& lineSegmentB)
+/*static*/ bool LineSegment::CalcLineSegmentCrossingAlphaBeta(const LineSegment& lineSegmentA, const LineSegment& lineSegmentB, double& alpha, double& beta)
 {
 	Vector3 a = lineSegmentA.point[0];
 	Vector3 b = lineSegmentA.GetDelta();
@@ -160,8 +160,32 @@ bool LineSegment::SetAsShortestConnector(const LineSegment& lineSegmentA, const 
 	vector.y = d.Dot(delta);
 	vector = matrixInv * vector;
 
-	double alpha = vector.x;
-	double beta = vector.y;
+	alpha = vector.x;
+	beta = vector.y;
+
+	return true;
+}
+
+/*static*/ bool LineSegment::LineSegmentsCross(const LineSegment& lineSegmentA, const LineSegment& lineSegmentB)
+{
+	double alpha = 0.0;
+	double beta = 0.0;
+
+	if (!CalcLineSegmentCrossingAlphaBeta(lineSegmentA, lineSegmentB, alpha, beta))
+		return false;
+
+	Interval unitInterval(0.0, 1.0);
+
+	return unitInterval.ContainsValue(alpha) && unitInterval.ContainsValue(beta);
+}
+
+bool LineSegment::SetAsShortestConnector(const LineSegment& lineSegmentA, const LineSegment& lineSegmentB)
+{
+	double alpha = 0.0;
+	double beta = 0.0;
+
+	if (!CalcLineSegmentCrossingAlphaBeta(lineSegmentA, lineSegmentB, alpha, beta))
+		return false;
 
 	alpha = HM_MIN(alpha, 1.0);
 	alpha = HM_MAX(alpha, 0.0);

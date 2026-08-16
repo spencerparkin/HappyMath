@@ -2,6 +2,7 @@
 
 #include "HappyMath/Vector3.h"
 #include "HappyMath/BoxTree.h"
+#include "HappyMath/Interval.h"
 #include <set>
 
 namespace HappyMath
@@ -61,14 +62,16 @@ namespace HappyMath
 		bool ToPolygonMesh(PolygonMesh& mesh, std::function<void(double)> progressCallback = {});
 
 		/**
-		 * Construct a graph as a function of the given surface.  The goal is
-		 * make sure that all cycles are triangles.
+		 * Construct a graph as a function of the given surface.  If in the resulting graph
+		 * there are non-triangular cycles, then the resulting polygons (whose vertices may
+		 * not be coplanar) can be arbitrarily tessellated.
 		 * 
 		 * @param[in] surface All vertices of the graph will be on this surface.
-		 * @param[in] minDegree All vertices will have at least this many connected edges.
-		 * @param[in] maxEdgeLength No edge will exceed this in length.
+		 * @param[in] minDegree All vertices will have at least this many connected edges, unless possibly they're at a boundary point of the surface.
+		 * @param[in] walkDistance This is roughly how far we walk along the tangent space from surface point to surface point.
+		 * @param[in] probePoint The initial point found on the surface will be the one closest to this point.
 		 */
-		bool FromSurface(const Surface* surface, int minDegree, double maxEdgeLength);
+		bool FromSurface(const Surface* surface, int minDegree, double walkDistance, const Vector3& probePoint);
 
 		/**
 		 * Uniformly(?) merge adjacent vertices of the mesh until the given
@@ -210,6 +213,9 @@ namespace HappyMath
 			 */
 			Node* FindAdjacencyInDirection(const Vector3& unitDirection);
 
+			void Dump(std::ostream& stream) const;
+			void Restore(std::istream& stream);
+
 		private:
 			Vector3 vertex;
 			Vector3 normal;
@@ -251,6 +257,21 @@ namespace HappyMath
 
 		const Node* GetNode(int i) const { return this->nodeArray[i]; }
 		int GetNumNodes() const { return (int)this->nodeArray.size(); }
+
+		/**
+		 * Do a linear search for the node in this graph nearest the given node.
+		 */
+		Node* FindClosestNode(const Vector3& vertex, double& smallestSquareDistance);
+
+		/**
+		 * Write this graph to the given stream in binary form.
+		 */
+		void Dump(std::ostream& stream) const;
+
+		/**
+		 * Read this graph from the given stream in binary form.
+		 */
+		void Restore(std::istream& stream);
 
 	private:
 
