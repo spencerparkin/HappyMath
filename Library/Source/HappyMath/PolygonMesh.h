@@ -109,7 +109,7 @@ namespace HappyMath
 		/**
 		 * Convert this mesh into a triangle mesh.
 		 */
-		void TessellateFaces(double epsilon = 1e-6);
+		bool TessellateFaces(double epsilon = 1e-6);
 
 		/**
 		 * Perform a ray-cast against this mesh.  This method assumes that all polygons of the mesh are convex.

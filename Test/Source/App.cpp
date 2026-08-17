@@ -58,7 +58,8 @@ bool App::Setup()
 	if (!this->graph.ToPolygonMesh(this->mesh))
 		return false;
 
-	//this->mesh.TessellateFaces();		// STPTODO: This has problems.  Why?
+	if (!this->mesh.TessellateFaces())
+		return false;
 
 	this->lastTickTime = SDL_GetTicksNS();
 

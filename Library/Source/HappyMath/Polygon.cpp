@@ -1154,7 +1154,7 @@ bool Polygon::TessellateUntilTriangular(std::vector<Polygon>& polygonArray) cons
 		return true;
 	}
 
-	double bestAreaRatio = 0.0;
+	double bestAreaRatio = std::numeric_limits<double>::max();
 	int chosen_i = -1;
 	int chosen_j = -1;
 
@@ -1167,7 +1167,7 @@ bool Polygon::TessellateUntilTriangular(std::vector<Polygon>& polygonArray) cons
 			if (this->Split(i, j, polygonA, polygonB, true))
 			{
 				double areaRatio = polygonA.Area() / polygonB.Area();
-				if (::abs(areaRatio - 0.5) < ::abs(bestAreaRatio - 0.5))
+				if (::abs(areaRatio - 1.0) < ::abs(bestAreaRatio - 1.0))
 				{
 					chosen_i = i;
 					chosen_j = j;

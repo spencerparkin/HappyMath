@@ -391,16 +391,18 @@ void PolygonMesh::Reduce()
 	}
 }
 
-void PolygonMesh::TessellateFaces(double epsilon /*= 1e-6*/)
+bool PolygonMesh::TessellateFaces(double epsilon /*= 1e-6*/)
 {
 	std::vector<HappyMath::Polygon> standalonePolygonArrayA;
 	this->ToStandalonePolygonArray(standalonePolygonArrayA);
 
 	std::vector<HappyMath::Polygon> standalonePolygonArrayB;
 	for (HappyMath::Polygon& polygon : standalonePolygonArrayA)
-		polygon.TessellateUntilTriangular(standalonePolygonArrayB);
+		if (!polygon.TessellateUntilTriangular(standalonePolygonArrayB))
+			return false;
 
 	this->FromStandalonePolygonArray(standalonePolygonArrayB, epsilon);
+	return true;
 }
 
 void PolygonMesh::ToStandalonePolygonArray(std::vector<HappyMath::Polygon>& standalonePolygonArray) const
