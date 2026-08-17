@@ -340,17 +340,13 @@ bool Graph::FromSurface(const Surface* surface, int minDegree, double walkDistan
 			if (!unitTangentDirection.Normalize())
 				return false;
 
-			// Go in the direction of the tangent and probe the surface.
-			Ray ray;
-			ray.origin = node->vertex + unitTangentDirection * walkDistance;
-			ray.unitDirection = -node->normal;
+			// Go in the direction of the tangent and then project back down onto the surface.
 			std::unique_ptr<Node> tentativeNode(new Node());
-			bool surfacePointFound = surface->RayCast(ray, tentativeNode->vertex, tentativeNode->normal);
-
-			// If not found, then we're at a boundary point of the surface.
-			// Be done, even if we haven't reached our minimum degree.
-			if (!surfacePointFound)
+			tentativeNode->vertex = node->vertex + unitTangentDirection * walkDistance;
+			if (!surface->FindNearestPoint(tentativeNode->vertex, tentativeNode->vertex, tentativeNode->normal))
 				break;
+
+			// STPTODO: I'm not sure how this algorithm will fair when we start testing surfaces with edges.
 			
 			Node* newAdjacentNode = nullptr;
 
@@ -367,11 +363,12 @@ bool Graph::FromSurface(const Surface* surface, int minDegree, double walkDistan
 				newAdjacentNode = tentativeNode.release();
 			}
 
-			// Again, here we may be, approximately, at a boundary-point of the surface.
 			if (!newAdjacentNode)
 				break;
 
-			// We have to break out in this case or we'll loop indefinitely.
+			if (newAdjacentNode == node)
+				break;
+
 			if (node->IsAdjacentTo(newAdjacentNode))
 				break;
 
