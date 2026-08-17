@@ -166,7 +166,7 @@ bool LineSegment::ContainsInteriorPoint(const Vector3& point, double tolerance /
 	return true;
 }
 
-/*static*/ bool LineSegment::LineSegmentsCross(const LineSegment& lineSegmentA, const LineSegment& lineSegmentB)
+/*static*/ bool LineSegment::LineSegmentsCross(const LineSegment& lineSegmentA, const LineSegment& lineSegmentB, double tolerance /*= 1e-4*/)
 {
 	double alpha = 0.0;
 	double beta = 0.0;
@@ -174,7 +174,7 @@ bool LineSegment::ContainsInteriorPoint(const Vector3& point, double tolerance /
 	if (!CalcLineSegmentCrossingAlphaBeta(lineSegmentA, lineSegmentB, alpha, beta))
 		return false;
 
-	Interval unitInterval(0.0, 1.0);
+	Interval unitInterval(tolerance, 1.0 - tolerance);
 
 	return unitInterval.ContainsValue(alpha) && unitInterval.ContainsValue(beta);
 }

@@ -264,6 +264,11 @@ namespace HappyMath
 		Node* FindClosestNode(const Vector3& vertex, double& smallestSquareDistance);
 
 		/**
+		 * Do a linear search for all nodes in this graph that are in the given sphere.
+		 */
+		bool FindNodesInSphere(const Vector3& center, double radius, std::vector<Node*>& foundNodesArray);
+
+		/**
 		 * Write this graph to the given stream in binary form.
 		 */
 		void Dump(std::ostream& stream) const;
@@ -289,7 +294,7 @@ namespace HappyMath
 		 * This is used in the graph to mesh conversion process, and
 		 * it is destructive to the graph.
 		 */
-		bool FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray, int& numEdgesRemoved);
+		void FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray, bool& validCycle, int& numEdgesRemoved);
 
 	private:
 		std::vector<Node*> nodeArray;

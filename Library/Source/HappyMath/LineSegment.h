@@ -105,7 +105,7 @@ namespace HappyMath
 		 * tell us if they "cross" when viewed in the approximate plane containing both.
 		 * If they do live in the same plane, then this answers the question exactly.
 		 */
-		static bool LineSegmentsCross(const LineSegment& lineSegmentA, const LineSegment& lineSegmentB);
+		static bool LineSegmentsCross(const LineSegment& lineSegmentA, const LineSegment& lineSegmentB, double tolerance = 1e-4);
 
 		/**
 		 * Set this line segment as the shortest line segment connecting the two given line segments.

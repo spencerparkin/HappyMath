@@ -9,7 +9,7 @@ App::App()
 	this->window = nullptr;
 	this->context = nullptr;
 	this->appSetup = false;
-	this->cameraEye.SetComponents(0.0, 0.0, 10.0);
+	this->cameraEye.SetComponents(0.0, 0.0, 40.0);
 	this->lastTickTime = 0;
 	this->draggingMouse = false;
 }
@@ -58,7 +58,7 @@ bool App::Setup()
 	if (!this->graph.ToPolygonMesh(this->mesh))
 		return false;
 
-	this->mesh.TessellateFaces();
+	//this->mesh.TessellateFaces();		// STPTODO: This has problems.  Why?
 
 	this->lastTickTime = SDL_GetTicksNS();
 
@@ -121,6 +121,8 @@ void App::Render(double deltaTimeSeconds)
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glFrontFace(GL_CCW);
 
 	double aspectRatio = double(windowWidth) / double(windowHeight);
 
@@ -198,7 +200,7 @@ void App::Render(double deltaTimeSeconds)
 
 	glEnd();
 
-	glBegin(GL_TRIANGLES);
+	//glBegin(GL_TRIANGLES);
 
 	double r = 0.1;
 	double g = 0.2;
@@ -207,8 +209,10 @@ void App::Render(double deltaTimeSeconds)
 	for (int i = 0; i < this->mesh.GetNumPolygons(); i++)
 	{
 		const PolygonMesh::Polygon& polygon = this->mesh.GetPolygon(i);
-		if (polygon.vertexArray.size() != 3)
-			continue;
+		//if (polygon.vertexArray.size() != 3)
+		//	continue;
+
+		glBegin(GL_POLYGON);
 
 		glColor3d(r, g, b);
 
@@ -221,9 +225,11 @@ void App::Render(double deltaTimeSeconds)
 			const Vector3& vertex = this->mesh.GetVertex(polygon.vertexArray[j]);
 			glVertex3d(vertex.x, vertex.y, vertex.z);
 		}
+
+		glEnd();
 	}
 
-	glEnd();
+	//glEnd();
 
 	SDL_GL_SwapWindow(this->window);
 }

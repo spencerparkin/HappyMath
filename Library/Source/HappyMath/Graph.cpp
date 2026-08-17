@@ -3,6 +3,7 @@
 #include "HappyMath/Polygon.h"
 #include "HappyMath/Function.h"
 #include "HappyMath/Surface.h"
+#include "HappyMath/LineSegment.h"
 #include <map>
 #include <algorithm>
 #include <assert.h>
@@ -125,22 +126,28 @@ bool Graph::ToPolygonMesh(PolygonMesh& mesh, std::function<void(double)> progres
 	}
 
 	this->AssignIndicesForNodes();
-
-	PolygonMesh::Polygon polygon;
-	int numEdgesRemoved = 0;
-	while (this->FindAndRemovePolygonCycleForMesh(polygon.vertexArray, numEdgesRemoved))
+	
+	while (true)
 	{
-		mesh.AddPolygon(polygon);
+		PolygonMesh::Polygon polygon;
+		int numEdgesRemoved = 0;
+		bool validCycle = true;
+
+		this->FindAndRemovePolygonCycleForMesh(polygon.vertexArray, validCycle, numEdgesRemoved);
+
+		if (numEdgesRemoved == 0)
+			break;
+
+		if (validCycle)
+			mesh.AddPolygon(polygon);
+
 		totalEdgesRemoved += numEdgesRemoved;
+
 		if (progressCallback)
 			progressCallback(double(totalEdgesRemoved) / double(totalEdges));
 	}
 
-	for (const Node* node : this->nodeArray)
-		if (node->GetNumAdjacencies() > 0)
-			return false;
-
-	return true;
+	return totalEdges == totalEdgesRemoved;
 }
 
 void Graph::AssignIndicesForNodes() const
@@ -149,10 +156,10 @@ void Graph::AssignIndicesForNodes() const
 		this->nodeArray[i]->i = i;
 }
 
-bool Graph::FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray, int& numEdgesRemoved)
+void Graph::FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray, bool& validCycle, int& numEdgesRemoved)
 {
+	validCycle = false;
 	numEdgesRemoved = 0;
-
 	cycleArray.clear();
 
 	Node* initialNode = nullptr;
@@ -166,18 +173,18 @@ bool Graph::FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray, int& 
 	}
 
 	if (!initialNode)
-		return false;
+		return;
 
 	Node* nodeIn = nullptr;
 	Node* nodeOut = nullptr;
 	Node* node = initialNode;
 
-	do
+	while (true)
 	{
 		cycleArray.push_back(node->i);
 
 		if (node->adjacentNodeSet.size() == 0)
-			return false;
+			break;
 
 		Node* chosenNode = *node->adjacentNodeSet.begin();
 		if (nodeIn)
@@ -200,6 +207,9 @@ bool Graph::FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray, int& 
 			}
 		}
 		
+		if (chosenNode == nodeIn)
+			break;
+
 		nodeOut = chosenNode;
 		node->adjacentNodeSet.erase(nodeOut);
 		nodeIn = node;
@@ -207,9 +217,13 @@ bool Graph::FindAndRemovePolygonCycleForMesh(std::vector<int>& cycleArray, int& 
 		nodeOut = nullptr;
 
 		numEdgesRemoved++;
-	} while (node->i != initialNode->i);
 
-	return true;
+		if (node->i == initialNode->i)
+		{
+			validCycle = true;
+			break;
+		}
+	}
 }
 
 bool Graph::ReduceEdgeCount(int numEdgesToRemove)
@@ -360,15 +374,61 @@ bool Graph::FromSurface(const Surface* surface, int minDegree, double walkDistan
 			// We have to break out in this case or we'll loop indefinitely.
 			if (node->IsAdjacentTo(newAdjacentNode))
 				break;
-			
+
 			node->adjacentNodeSet.insert(newAdjacentNode);
 			newAdjacentNode->adjacentNodeSet.insert(node);
 		}
 	}
 
-	// STPTODO: Maybe now we delete any edges that cross other edges illegally?
-	//          The algorithm above, I believe, does not prevent the case where two
-	//          edges might cross one another.  Or maybe it does?  I'm not entirely sure.
+	// This remaining bit is quite intense and I wish it wasn't necessary.
+	// Ideally we'd detect a bad edge before making it or otherwise avoid such an occurance.
+
+	std::set<UnorderedEdge, UnorderedEdge> edgeSet;
+	this->GenerateEdgeSet(edgeSet);
+
+	std::vector<UnorderedEdge> edgeArray;
+	for (const UnorderedEdge& edge : edgeSet)
+		edgeArray.push_back(edge);
+
+	edgeSet.clear();
+
+	for (int i = 0; i < (int)edgeArray.size(); i++)
+	{
+		const UnorderedEdge& edgeA = edgeArray[i];
+
+		LineSegment lineSegA(this->nodeArray[edgeA.i]->vertex, this->nodeArray[edgeA.j]->vertex);
+
+		for (int j = i + 1; j < (int)edgeArray.size(); j++)
+		{
+			const UnorderedEdge& edgeB = edgeArray[j];
+
+			if (edgeA.i == edgeB.i || edgeA.i == edgeB.j)
+				continue;
+
+			if (edgeA.j == edgeB.i || edgeA.j == edgeB.j)
+				continue;
+
+			LineSegment lineSegB(this->nodeArray[edgeB.i]->vertex, this->nodeArray[edgeB.j]->vertex);
+
+			if (!LineSegment::LineSegmentsCross(lineSegA, lineSegB))
+				continue;
+
+			LineSegment connector;
+			connector.SetAsShortestConnector(lineSegA, lineSegB);
+			if (connector.Length() > walkDistance / 2.0)
+				continue;
+
+			// Arbitrarily choose to delete edge A.
+			edgeSet.insert(edgeA);
+		}
+	}
+
+	// Delete the offending edges.
+	for (const UnorderedEdge& edge : edgeSet)
+	{
+		this->nodeArray[edge.i]->adjacentNodeSet.erase(this->nodeArray[edge.j]);
+		this->nodeArray[edge.j]->adjacentNodeSet.erase(this->nodeArray[edge.i]);
+	}
 
 	return true;
 }
@@ -389,6 +449,19 @@ Graph::Node* Graph::FindClosestNode(const Vector3& vertex, double& smallestSquar
 	}
 
 	return foundNode;
+}
+
+bool Graph::FindNodesInSphere(const Vector3& center, double radius, std::vector<Node*>& foundNodesArray)
+{
+	foundNodesArray.clear();
+
+	double squareRadius = radius * radius;
+
+	for (Node* node : this->nodeArray)
+		if ((node->vertex - center).SquareLength() < squareRadius)
+			foundNodesArray.push_back(node);
+
+	return foundNodesArray.size() > 0;
 }
 
 double Graph::CalcEdgeLength(const Edge& edge) const

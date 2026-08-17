@@ -397,7 +397,7 @@ void PolygonMesh::TessellateFaces(double epsilon /*= 1e-6*/)
 	this->ToStandalonePolygonArray(standalonePolygonArrayA);
 
 	std::vector<HappyMath::Polygon> standalonePolygonArrayB;
-	for(HappyMath::Polygon& polygon : standalonePolygonArrayA)
+	for (HappyMath::Polygon& polygon : standalonePolygonArrayA)
 		polygon.TessellateUntilTriangular(standalonePolygonArrayB);
 
 	this->FromStandalonePolygonArray(standalonePolygonArrayB, epsilon);
