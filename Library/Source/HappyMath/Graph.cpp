@@ -347,6 +347,8 @@ bool Graph::FromSurface(const Surface* surface, int minDegree, double walkDistan
 				break;
 
 			// STPTODO: I'm not sure how this algorithm will fair when we start testing surfaces with edges.
+			//          I think we're also going to suffer here when there are major discontinuities of the
+			//          gradient of the surface.
 			
 			Node* newAdjacentNode = nullptr;
 
