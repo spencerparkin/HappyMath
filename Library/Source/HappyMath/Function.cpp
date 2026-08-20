@@ -4,6 +4,72 @@
 
 using namespace HappyMath;
 
+namespace HappyMath
+{
+	double FindExtrema(std::function<double(double)> func, ExtremaType extremaType, const Interval& range, int numSamplesPerIteration, double eps /*= 1e-7*/)
+	{
+		double extremaValue = 0;
+		switch (extremaType)
+		{
+		case ExtremaType::Minimum:
+			extremaValue = std::numeric_limits<double>::max();
+			break;
+		case ExtremaType::Maximum:
+			extremaValue = -std::numeric_limits<double>::max();
+			break;
+		}
+
+		Interval interval = range;
+		double foundParameter = 0.0;
+
+		while (interval.Size() > eps)
+		{
+			int j = -1;
+
+			for (int i = 0; i < numSamplesPerIteration; i++)
+			{
+				double parameter = interval.Lerp(double(i) / double(numSamplesPerIteration - 1));
+				double value = func(parameter);
+				
+				switch (extremaType)
+				{
+					case ExtremaType::Minimum:
+					{
+						if (value < extremaValue)
+						{
+							foundParameter = parameter;
+							extremaValue = value;
+							j = i;
+						}
+						break;
+					}
+					case ExtremaType::Maximum:
+					{
+						if (value > extremaValue)
+						{
+							foundParameter = parameter;
+							extremaValue = value;
+							j = i;
+						}
+						break;
+					}
+				}
+			}
+
+			HM_ASSERT(j != -1);
+
+			int min_i = (j > 0) ? (j - 1) : 0;
+			int max_i = (j < numSamplesPerIteration - 1) ? (j + 1) : j;
+
+			interval = Interval(
+				interval.Lerp(double(min_i) / double(numSamplesPerIteration - 1)),
+				interval.Lerp(double(max_i) / double(numSamplesPerIteration - 1)));
+		}
+
+		return foundParameter;
+	}
+}
+
 //------------------------------------- Quadratic -------------------------------------
 
 Quadratic::Quadratic()

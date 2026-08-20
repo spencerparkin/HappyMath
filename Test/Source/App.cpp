@@ -48,7 +48,12 @@ bool App::Setup()
 
 	SDL_GL_SetSwapInterval(1);	// Enable V-sync.
 
-	SphereSurface surface(Vector3(0.0, 0.0, 0.0), 10.0);
+	EllipticalDonutSurface surface;
+	surface.A = 10.0;
+	surface.B = 14.0;
+	surface.girthRadius = 3.0;
+
+	//SphereSurface surface(Vector3(0.0, 0.0, 0.0), 10.0);
 
 	if (!this->graph.FromSurface(&surface, 5, 1.0, Vector3(1.0, 0.0, 0.0)))
 		return false;

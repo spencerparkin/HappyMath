@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vector3.h"
+#include "Transform.h"
 #include "Ray.h"
 
 namespace HappyMath
@@ -43,4 +44,32 @@ namespace HappyMath
 		Vector3 center;
 		double radius;
 	};
+
+	/**
+	 * This is a somewhat more complicated example of a surface.
+	 */
+	class EllipticalDonutSurface : public Surface
+	{
+	public:
+		EllipticalDonutSurface();
+		virtual ~EllipticalDonutSurface();
+
+		virtual bool FindNearestPoint(const Vector3& point, Vector3& surfacePoint, Vector3& surfaceNormal) const override;
+		virtual bool RayCast(const Ray& ray, Vector3& surfacePoint, Vector3& surfaceNormal) const override;
+
+		Vector3 CalcSpinePoint(double t) const;
+
+		Transform transform;
+		double A, B;
+		double girthRadius;
+	};
+
+	// STPTODO: It would be interesting if you could define a Surface-derived class
+	//          that owns two other surface classes and represents the surface that is
+	//          the union of those two surfaces.  It's not immediately obvious to me
+	//          how you would do this.  I'd also be okay if there was a surface-tention
+	//          between them, meaning that it's not a true union so that you still get
+	//          continuity of the gradient everywhere.  Think of putting your finger on
+	//          the surface of water in a cup.  The water will pull up to your finger
+	//          because of surface tention.
 }

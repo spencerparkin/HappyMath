@@ -4,12 +4,26 @@
 #include "HappyMath/Vector2.h"
 #include "HappyMath/Vector3.h"
 #include "HappyMath/Vector4.h"
+#include "HappyMath/Interval.h"
 #include <vector>
 #include <istream>
 #include <ostream>
+#include <functional>
 
 namespace HappyMath
 {
+	enum ExtremaType
+	{
+		Minimum,
+		Maximum
+	};
+
+	/**
+	 * This is a numerical method for finding minimums and maximum of a function in a given range.
+	 * It doesn't employ calculus method or Newton-iteration or anything, but it can still be effective.
+	 */
+	double FindExtrema(std::function<double(double)> func, ExtremaType extremaType, const Interval& range, int numSamplesPerIteration, double eps = 1e-7);
+
 	class HAPPY_MATH_API RealToRealFunction
 	{
 	public:
