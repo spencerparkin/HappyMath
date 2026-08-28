@@ -27,6 +27,19 @@ namespace HappyMath
 		 * Find and return the nearest point hit by the given ray, if any.
 		 */
 		virtual bool RayCast(const Ray& ray, Vector3& surfacePoint, Vector3& surfaceNormal) const;
+
+		enum Side
+		{
+			NEITHER,
+			INSIDE,
+			OUTSIDE
+		};
+
+		/**
+		 * Determine which side a given point is on.  Some surfaces don't have a clear
+		 * inside and outside, but if they do, then you can return that here.
+		 */
+		virtual Side WhichSide(const Vector3& point, double tolerance = 1e-6) const;
 	};
 
 	/**
@@ -40,6 +53,7 @@ namespace HappyMath
 
 		virtual bool FindNearestPoint(const Vector3& point, Vector3& surfacePoint, Vector3& surfaceNormal) const override;
 		virtual bool RayCast(const Ray& ray, Vector3& surfacePoint, Vector3& surfaceNormal) const override;
+		virtual Side WhichSide(const Vector3& point, double tolerance = 1e-6) const override;
 
 		Vector3 center;
 		double radius;
@@ -56,20 +70,30 @@ namespace HappyMath
 
 		virtual bool FindNearestPoint(const Vector3& point, Vector3& surfacePoint, Vector3& surfaceNormal) const override;
 		virtual bool RayCast(const Ray& ray, Vector3& surfacePoint, Vector3& surfaceNormal) const override;
+		virtual Side WhichSide(const Vector3& point, double tolerance = 1e-6) const override;
 
 		Vector3 CalcSpinePoint(double t) const;
+		Vector3 CalcNearestSpinePoint(const Vector3& point) const;
 
 		Transform transform;
 		double A, B;
 		double girthRadius;
 	};
 
-	// STPTODO: It would be interesting if you could define a Surface-derived class
-	//          that owns two other surface classes and represents the surface that is
-	//          the union of those two surfaces.  It's not immediately obvious to me
-	//          how you would do this.  I'd also be okay if there was a surface-tention
-	//          between them, meaning that it's not a true union so that you still get
-	//          continuity of the gradient everywhere.  Think of putting your finger on
-	//          the surface of water in a cup.  The water will pull up to your finger
-	//          because of surface tention.
+	/**
+	 * Here we try to form the surface that is the union of two other surfaces.
+	 * This can make sense if each surface has a clearly defined inside and outside.
+	 */
+	class UnionSurface : public Surface
+	{
+	public:
+		UnionSurface(Surface* surfaceA, Surface* surfaceB);
+		virtual ~UnionSurface();
+
+		virtual bool FindNearestPoint(const Vector3& point, Vector3& surfacePoint, Vector3& surfaceNormal) const override;
+
+	private:
+		Surface* surfaceA;
+		Surface* surfaceB;
+	};
 }

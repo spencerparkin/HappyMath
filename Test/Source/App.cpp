@@ -48,12 +48,18 @@ bool App::Setup()
 
 	SDL_GL_SetSwapInterval(1);	// Enable V-sync.
 
-	EllipticalDonutSurface surface;
-	surface.A = 10.0;
-	surface.B = 14.0;
-	surface.girthRadius = 3.0;
+	auto* ellipticalSurface = new EllipticalDonutSurface();
+	ellipticalSurface->A = 10.0;
+	ellipticalSurface->B = 14.0;
+	ellipticalSurface->girthRadius = 3.0;
 
-	//SphereSurface surface(Vector3(0.0, 0.0, 0.0), 10.0);
+	auto* sphericalSurface = new SphereSurface(Vector3(8.0, 0.0, 0.0), 10.0);
+
+	// This was an interesting experiment.  It seems to have worked for the most part,
+	// but as expected, the graph algorithm suffers where the surface is not well-behaved.
+	// (i.e., where the surface has discontinuities in the gradient.)  Also, I can't be
+	// sure that the FindNearestPoint function is actually correct in all cases.
+	UnionSurface surface(ellipticalSurface, sphericalSurface);
 
 	if (!this->graph.FromSurface(&surface, 5, 1.0, Vector3(1.0, 0.0, 0.0)))
 		return false;
@@ -206,7 +212,7 @@ void App::Render(double deltaTimeSeconds)
 
 	glEnd();
 
-	//glBegin(GL_TRIANGLES);
+	glBegin(GL_TRIANGLES);
 
 	double r = 0.1;
 	double g = 0.2;
@@ -215,10 +221,8 @@ void App::Render(double deltaTimeSeconds)
 	for (int i = 0; i < this->mesh.GetNumPolygons(); i++)
 	{
 		const PolygonMesh::Polygon& polygon = this->mesh.GetPolygon(i);
-		//if (polygon.vertexArray.size() != 3)
-		//	continue;
-
-		glBegin(GL_POLYGON);
+		if (polygon.vertexArray.size() != 3)
+			continue;
 
 		glColor3d(r, g, b);
 
@@ -231,11 +235,9 @@ void App::Render(double deltaTimeSeconds)
 			const Vector3& vertex = this->mesh.GetVertex(polygon.vertexArray[j]);
 			glVertex3d(vertex.x, vertex.y, vertex.z);
 		}
-
-		glEnd();
 	}
 
-	//glEnd();
+	glEnd();
 
 	SDL_GL_SwapWindow(this->window);
 }
