@@ -33,8 +33,8 @@ void Rectangle::MakeInvalid()
 {
 	this->minCorner.x = std::numeric_limits<double>::max();
 	this->minCorner.y = std::numeric_limits<double>::max();
-	this->maxCorner.x = std::numeric_limits<double>::min();
-	this->maxCorner.y = std::numeric_limits<double>::min();
+	this->maxCorner.x = -std::numeric_limits<double>::max();
+	this->maxCorner.y = -std::numeric_limits<double>::max();
 }
 
 void Rectangle::operator=(const Rectangle& rectangle)
@@ -73,6 +73,11 @@ double Rectangle::GetAspectRatio() const
 Vector2 Rectangle::GetCenter() const
 {
 	return (this->minCorner + this->maxCorner) / 2.0;
+}
+
+double Rectangle::GetArea() const
+{
+	return this->GetWidth() * this->GetHeight();
 }
 
 bool Rectangle::ContainsPoint(const Vector2& point) const

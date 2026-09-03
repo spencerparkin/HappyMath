@@ -24,6 +24,7 @@ namespace HappyMath
 		double GetHeight() const;
 		double GetAspectRatio() const;
 		Vector2 GetCenter() const;
+		double GetArea() const;
 		bool ContainsPoint(const Vector2& point) const;
 		bool Intersect(const Rectangle& rectangleA, const Rectangle& rectangleB);
 		void ExpandToIncludePoint(const Vector2& point);
