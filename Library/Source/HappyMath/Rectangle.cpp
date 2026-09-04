@@ -188,3 +188,41 @@ Vector2 Rectangle::PointFromUVs(const Vector2& uv) const
 	point.y = this->minCorner.y + uv.y * this->GetHeight();
 	return point;
 }
+
+void Rectangle::Split(Rectangle& rectA, Rectangle& rectB, double alpha) const
+{
+	if (this->GetAspectRatio() >= 1.0)
+		this->SplitVertically(rectA, rectB, alpha);
+	else
+		this->SplitHorizontally(rectA, rectB, alpha);
+}
+
+void Rectangle::SplitVertically(Rectangle& rectA, Rectangle& rectB, double alpha) const
+{
+	Vector2 pointA(alpha, 0.0);
+	Vector2 pointB(alpha, 1.0);
+
+	pointA = this->PointFromUVs(pointA);
+	pointB = this->PointFromUVs(pointB);
+
+	rectA.minCorner = this->minCorner;
+	rectA.maxCorner = pointB;
+
+	rectB.minCorner = pointA;
+	rectB.maxCorner = this->maxCorner;
+}
+
+void Rectangle::SplitHorizontally(Rectangle& rectA, Rectangle& rectB, double alpha) const
+{
+	Vector2 pointA(0.0, alpha);
+	Vector2 pointB(1.0, alpha);
+
+	pointA = this->PointFromUVs(pointA);
+	pointB = this->PointFromUVs(pointB);
+
+	rectA.minCorner = this->minCorner;
+	rectA.maxCorner = pointB;
+
+	rectB.minCorner = pointA;
+	rectB.maxCorner = this->maxCorner;
+}

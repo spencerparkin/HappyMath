@@ -39,6 +39,9 @@ namespace HappyMath
 		void AddVerticalMargin(double margin);
 		Vector2 PointToUVs(const Vector2& point) const;
 		Vector2 PointFromUVs(const Vector2& uv) const;
+		void Split(Rectangle& rectA, Rectangle& rectB, double alpha) const;
+		void SplitVertically(Rectangle& rectA, Rectangle& rectB, double alpha) const;
+		void SplitHorizontally(Rectangle& rectA, Rectangle& rectB, double alpha) const;
 
 	public:
 		Vector2 minCorner, maxCorner;
