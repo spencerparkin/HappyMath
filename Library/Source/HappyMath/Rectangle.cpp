@@ -191,7 +191,7 @@ Vector2 Rectangle::PointFromUVs(const Vector2& uv) const
 
 void Rectangle::Split(Rectangle& rectA, Rectangle& rectB, double alpha) const
 {
-	if (this->GetAspectRatio() >= 1.0)
+	if (this->GetWidth() > this->GetHeight())
 		this->SplitVertically(rectA, rectB, alpha);
 	else
 		this->SplitHorizontally(rectA, rectB, alpha);
