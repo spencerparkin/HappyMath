@@ -226,3 +226,9 @@ void Rectangle::SplitHorizontally(Rectangle& rectA, Rectangle& rectB, double alp
 	rectB.minCorner = pointA;
 	rectB.maxCorner = this->maxCorner;
 }
+
+void Rectangle::Lerp(const Rectangle& rectA, const Rectangle& rectB, double alpha)
+{
+	this->minCorner.Lerp(rectA.minCorner, rectB.minCorner, alpha);
+	this->maxCorner.Lerp(rectA.maxCorner, rectB.maxCorner, alpha);
+}

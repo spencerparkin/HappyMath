@@ -42,6 +42,7 @@ namespace HappyMath
 		void Split(Rectangle& rectA, Rectangle& rectB, double alpha) const;
 		void SplitVertically(Rectangle& rectA, Rectangle& rectB, double alpha) const;
 		void SplitHorizontally(Rectangle& rectA, Rectangle& rectB, double alpha) const;
+		void Lerp(const Rectangle& rectA, const Rectangle& rectB, double alpha);
 
 	public:
 		Vector2 minCorner, maxCorner;

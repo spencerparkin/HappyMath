@@ -37,6 +37,11 @@ bool Vector2::Normalize(double* length /*= nullptr*/)
 	return true;
 }
 
+void Vector2::Lerp(const Vector2& vectorA, const Vector2& vectorB, double alpha)
+{
+	*this = vectorA + alpha * (vectorB - vectorA);
+}
+
 void Vector2::Dump(std::ostream& stream) const
 {
 	stream.write((char*)&this->x, sizeof(this->x));

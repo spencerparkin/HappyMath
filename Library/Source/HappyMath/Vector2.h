@@ -181,6 +181,15 @@ namespace HappyMath
 		bool Normalize(double* length = nullptr);
 
 		/**
+		 * Linearly interpolate between two vectors.
+		 * 
+		 * @param[in] vectorA This is the result if alpha is zero.
+		 * @param[in] vectorB This is the result if alpha is one.
+		 * @param[in] alpha This is typically a value in [0,1].
+		 */
+		void Lerp(const Vector2& vectorA, const Vector2& vectorB, double alpha);
+
+		/**
 		 * Write this vector to the given stream in binary form.
 		 */
 		void Dump(std::ostream& stream) const;
