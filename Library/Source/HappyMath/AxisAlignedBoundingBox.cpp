@@ -454,6 +454,12 @@ void AxisAlignedBoundingBox::SetFromSphere(const Vector3& center, double radius)
 	this->maxCorner = center - delta;
 }
 
+bool AxisAlignedBoundingBox::OverlapsAABB(const AxisAlignedBoundingBox& box) const
+{
+	AxisAlignedBoundingBox intersection;
+	return intersection.Intersect(*this, box);
+}
+
 bool AxisAlignedBoundingBox::OverlapsSphere(const Vector3& center, double radius) const
 {
 	double squareDistance = this->CalcShortestSquareDistanceToPoint(center);

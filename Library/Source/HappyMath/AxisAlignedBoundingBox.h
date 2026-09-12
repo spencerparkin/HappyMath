@@ -228,6 +228,11 @@ namespace HappyMath
 		void SetFromSphere(const Vector3& center, double radius);
 
 		/**
+		 * Tell us if this AABB overlaps with the given AABB.
+		 */
+		bool OverlapsAABB(const AxisAlignedBoundingBox& box) const;
+
+		/**
 		 * Tell us if this AABB overlaps the given sphere.
 		 * 
 		 * @param[in] center This is the center of the sphere in question.

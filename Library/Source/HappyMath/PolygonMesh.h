@@ -72,19 +72,32 @@ namespace HappyMath
 		 * If topologically, the given meshes have descernable insides and outsides,
 		 * calculate this mesh as their union.  (Klein bottles don't work.)
 		 */
-		void CalculateUnion(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB);
+		bool CalculateUnion(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB);
 
 		/**
 		 * If topologically, the given meshes have descernable insides and outsides,
 		 * calculate this mesh as their intersection.  (Klein bottles don't work.)
 		 */
-		void CalculateIntersection(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB);
+		bool CalculateIntersection(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB);
 
 		/**
 		 * If topologically, the given meshes have descernable insides and outsides,
 		 * calculate this mesh as the first minus the second.  (Klein bottles don't work.)
 		 */
-		void CalculateDifference(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB);
+		bool CalculateDifference(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB);
+
+		struct SetOperationPolygons
+		{
+			std::vector<HappyMath::Polygon> insidePolygonsA;
+			std::vector<HappyMath::Polygon> insidePolygonsB;
+			std::vector<HappyMath::Polygon> outsidePolygonsA;
+			std::vector<HappyMath::Polygon> outsidePolygonsB;
+		};
+
+		/**
+		 * This function is used by the @ref CalculateUnion, @ref CAlculateIntersection, and @ref CalculateDifference methods.
+		 */
+		static bool CalculateSetOperationPolygons(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB, SetOperationPolygons& setOpPolygons);
 
 		/**
 		 * Generate from this mesh a list of all its polygons, each having its own vertex data.

@@ -30,7 +30,49 @@ bool BoxTree::InsertObject(std::shared_ptr<Object> object)
 	if (!this->rootNode->boundingBox.ContainsBox(objectBox))
 		return false;
 
-	return this->rootNode->InsertObject(object, objectBox, this);
+	Node* insertionNode = this->rootNode->FindInsertionNode(object.get(), objectBox, this);
+	if (!insertionNode)
+		return false;
+
+	insertionNode->objectArray.push_back(object);
+	return true;
+}
+
+bool BoxTree::RemoveObject(std::shared_ptr<Object> object)
+{
+	if (!this->rootNode.get())
+		return false;
+
+	AxisAlignedBoundingBox objectBox = object->GetMinimalBoundingBox();
+
+	if (!this->rootNode->boundingBox.ContainsBox(objectBox))
+		return false;
+
+	Node* insertionNode = this->rootNode->FindInsertionNode(object.get(), objectBox, this);
+	if (!insertionNode)
+		return false;
+
+	for (int i = 0; i < (int)insertionNode->objectArray.size(); i++)
+	{
+		if (insertionNode->objectArray[i].get() == object.get())
+		{
+			insertionNode->objectArray.erase(insertionNode->objectArray.begin() + i);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool BoxTree::FindObjectsOverlappingBox(const AxisAlignedBoundingBox& box, std::vector<std::shared_ptr<Object>>& objectArray)
+{
+	if (!this->rootNode.get())
+		return false;
+
+	if (!this->rootNode->boundingBox.OverlapsAABB(box))
+		return false;
+
+	return this->rootNode->FindObjectsOverlappingBox(box, objectArray);
 }
 
 bool BoxTree::FindObjectsOverlappingSphere(const Vector3& center, double radius, std::vector<std::shared_ptr<Object>>& objectArray)
@@ -59,6 +101,12 @@ std::shared_ptr<BoxTree::Object> BoxTree::FindClosestObjectToPoint(const Vector3
 	return foundObject;
 }
 
+void BoxTree::ForAllObjects(std::function<void(Object*)> objectFunc)
+{
+	if (this->rootNode.get())
+		this->rootNode->ForAllObjects(objectFunc);
+}
+
 //-------------------------------------- BoxTree::Object --------------------------------------
 
 BoxTree::Object::Object()
@@ -79,13 +127,10 @@ BoxTree::Node::Node()
 {
 }
 
-bool BoxTree::Node::InsertObject(std::shared_ptr<Object> object, const AxisAlignedBoundingBox& objectBox, BoxTree* boxTree)
+BoxTree::Node* BoxTree::Node::FindInsertionNode(Object* object, const AxisAlignedBoundingBox& objectBox, BoxTree* boxTree)
 {
 	if (this->boundingBox.GetVolume() <= boxTree->minBoxVolume)
-	{
-		this->objectArray.push_back(object);
-		return true;
-	}
+		return this;
 
 	if (!this->node[0].get() || !this->node[1].get())
 	{
@@ -99,12 +144,32 @@ bool BoxTree::Node::InsertObject(std::shared_ptr<Object> object, const AxisAlign
 	{
 		if (this->node[i]->boundingBox.ContainsBox(objectBox))
 		{
-			return this->node[i]->InsertObject(object, objectBox, boxTree);
+			return this->node[i]->FindInsertionNode(object, objectBox, boxTree);
 		}
 	}
 
-	this->objectArray.push_back(object);
-	return true;
+	return this;
+}
+
+bool BoxTree::Node::FindObjectsOverlappingBox(const AxisAlignedBoundingBox& box, std::vector<std::shared_ptr<Object>>& objectArray)
+{
+	for (std::shared_ptr<Object> object : this->objectArray)
+	{
+		if (object->GetMinimalBoundingBox().OverlapsAABB(box))
+		{
+			objectArray.push_back(object);
+		}
+	}
+
+	for (int i = 0; i < 2; i++)
+	{
+		if (this->node[i] && this->node[i]->boundingBox.OverlapsAABB(box))
+		{
+			this->node[i]->FindObjectsOverlappingBox(box, objectArray);
+		}
+	}
+
+	return objectArray.size() > 0;
 }
 
 bool BoxTree::Node::FindObjectsOverlappingSphere(const Vector3& center, double radius, std::vector<std::shared_ptr<Object>>& objectArray)
@@ -188,4 +253,16 @@ std::shared_ptr<BoxTree::Object> BoxTree::Node::FindClosestObjectToPoint(const V
 	}
 
 	return foundObject;
+}
+
+void BoxTree::Node::ForAllObjects(std::function<void(Object*)> objectFunc)
+{
+	for (int i = 0; i < (int)this->objectArray.size(); i++)
+		objectFunc(this->objectArray[i].get());
+
+	if (this->node[0])
+		this->node[0]->ForAllObjects(objectFunc);
+
+	if (this->node[1])
+		this->node[1]->ForAllObjects(objectFunc);
 }

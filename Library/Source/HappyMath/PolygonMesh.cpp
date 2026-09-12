@@ -2,7 +2,10 @@
 #include "HappyMath/Polygon.h"
 #include "HappyMath/Graph.h"
 #include "HappyMath/ExpandingPolytopeAlgorithm.h"
+#include "HappyMath/LineSegment.h"
+#include "HappyMath/Plane.h"
 #include <functional>
+#include <assert.h>
 
 using namespace HappyMath;
 
@@ -349,19 +352,154 @@ bool PolygonMesh::ReduceEdgeCount(int numEdgesToRemove)
 	return true;
 }
 
-void PolygonMesh::CalculateUnion(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB)
+bool PolygonMesh::CalculateUnion(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB)
 {
-	// TODO: Write this.
+	SetOperationPolygons setOpPolygons;
+	if (!CalculateSetOperationPolygons(polygonMeshA, polygonMeshB, setOpPolygons))
+		return false;
+
+	std::vector<HappyMath::Polygon> polygonArray;
+
+	for (HappyMath::Polygon& polygon : setOpPolygons.outsidePolygonsA)
+		polygonArray.push_back(std::move(polygon));
+
+	for (HappyMath::Polygon& polygon : setOpPolygons.outsidePolygonsB)
+		polygonArray.push_back(std::move(polygon));
+
+	this->FromStandalonePolygonArray(polygonArray);
+	return true;
 }
 
-void PolygonMesh::CalculateIntersection(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB)
+bool PolygonMesh::CalculateIntersection(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB)
 {
-	// TODO: Write this.
+	SetOperationPolygons setOpPolygons;
+	if (!CalculateSetOperationPolygons(polygonMeshA, polygonMeshB, setOpPolygons))
+		return false;
+
+	std::vector<HappyMath::Polygon> polygonArray;
+
+	for (HappyMath::Polygon& polygon : setOpPolygons.insidePolygonsA)
+		polygonArray.push_back(std::move(polygon));
+
+	for (HappyMath::Polygon& polygon : setOpPolygons.insidePolygonsB)
+		polygonArray.push_back(std::move(polygon));
+
+	this->FromStandalonePolygonArray(polygonArray);
+	return true;
 }
 
-void PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB)
+bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB)
 {
-	// TODO: Write this.
+	SetOperationPolygons setOpPolygons;
+	if (!CalculateSetOperationPolygons(polygonMeshA, polygonMeshB, setOpPolygons))
+		return false;
+
+	std::vector<HappyMath::Polygon> polygonArray;
+
+	for (HappyMath::Polygon& polygon : setOpPolygons.outsidePolygonsA)
+		polygonArray.push_back(std::move(polygon));
+
+	for (HappyMath::Polygon& polygon : setOpPolygons.insidePolygonsB)
+		polygonArray.push_back(std::move(polygon));
+
+	this->FromStandalonePolygonArray(polygonArray);
+	return true;
+}
+
+/*static*/ bool PolygonMesh::CalculateSetOperationPolygons(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB, SetOperationPolygons& setOpPolygons)
+{
+	std::vector<HappyMath::Polygon> polygonArrayA;
+	polygonMeshA.ToStandalonePolygonArray(polygonArrayA);
+
+	std::vector<HappyMath::Polygon> polygonArrayB;
+	polygonMeshB.ToStandalonePolygonArray(polygonArrayB);
+
+	AxisAlignedBoundingBox meshBBox;
+
+	meshBBox.MakeReadyForExpansion();
+
+	for (const HappyMath::Polygon& polygon : polygonArrayB)
+		polygon.ExpandBox(meshBBox);
+
+	meshBBox.Scale(2.0);
+
+	BoxTree boxTreeMeshB;
+	boxTreeMeshB.Reset(meshBBox, meshBBox.GetVolume() / 32.0);
+
+	for (HappyMath::Polygon& polygon : polygonArrayB)
+		boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(polygon));
+
+	polygonArrayB.clear();
+
+	std::list<HappyMath::Polygon> polygonQueueA;
+	for (HappyMath::Polygon& polygon : polygonArrayA)
+		polygonQueueA.push_back(std::move(polygon));
+
+	polygonArrayA.clear();
+
+	while (polygonQueueA.size() > 0)
+	{
+		HappyMath::Polygon polygonA = std::move(*polygonQueueA.begin());
+		polygonQueueA.pop_front();
+
+		AxisAlignedBoundingBox box;
+		polygonA.CalcBoundingBox(box);
+
+		std::vector<std::shared_ptr<BoxTree::Object>> objectArray;
+		if (!boxTreeMeshB.FindObjectsOverlappingBox(box, objectArray))
+		{
+			polygonArrayA.push_back(std::move(polygonA));
+			continue;
+		}
+
+		bool cutHappened = false;
+
+		for (int i = 0; i < (int)objectArray.size(); i++)
+		{
+			HappyMath::Polygon& polygonB = static_cast<PolygonObject*>(objectArray[i].get())->polygon;
+
+			LineSegment lineSegment;
+			if (!lineSegment.Intersect(polygonA, polygonB))
+				continue;
+			
+			Plane planeA = polygonA.CalcPlane(true);
+			Plane planeB = polygonB.CalcPlane(true);
+
+			boxTreeMeshB.RemoveObject(objectArray[i]);
+
+			HappyMath::Polygon polygonABack, polygonAFront;
+			bool successfulCut = polygonA.SplitAgainstPlane(planeB, polygonABack, polygonAFront);
+			assert(successfulCut);
+
+			HappyMath::Polygon polygonBBack, polygonBFront;
+			successfulCut = polygonB.SplitAgainstPlane(planeA, polygonBBack, polygonBFront);
+			assert(successfulCut);
+
+			polygonQueueA.push_back(std::move(polygonABack));
+			polygonQueueA.push_back(std::move(polygonAFront));
+
+			boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(polygonBBack));
+			boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(polygonBFront));
+
+			cutHappened = true;
+			break;
+		}
+
+		if (!cutHappened)
+		{
+			polygonArrayA.push_back(std::move(polygonA));
+			break;
+		}
+	}
+
+	boxTreeMeshB.ForAllObjects([&polygonArrayB](BoxTree::Object* object) -> void
+		{
+			polygonArrayB.push_back(std::move(static_cast<PolygonObject*>(object)->polygon));
+		});
+
+	// STPTODO: Sort the polygons here.  This is arguably the hardest part.
+
+	return true;
 }
 
 void PolygonMesh::SimplifyFaces(bool mustBeConvex, double epsilon /*= 1e-6*/)

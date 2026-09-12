@@ -3,6 +3,7 @@
 #include "HappyMath/Common.h"
 #include "HappyMath/AxisAlignedBoundingBox.h"
 #include <memory>
+#include <functional>
 
 namespace HappyMath
 {
@@ -57,6 +58,16 @@ namespace HappyMath
 		bool InsertObject(std::shared_ptr<Object> object);
 
 		/**
+		 * 
+		 */
+		bool RemoveObject(std::shared_ptr<Object> object);
+
+		/**
+		 * Quickly find and return all objects in this tree that overlap the given AABB.
+		 */
+		bool FindObjectsOverlappingBox(const AxisAlignedBoundingBox& box, std::vector<std::shared_ptr<Object>>& objectArray);
+
+		/**
 		 * Quickly find and return all objects in this tree that overlap the given sphere.
 		 */
 		bool FindObjectsOverlappingSphere(const Vector3& center, double radius, std::vector<std::shared_ptr<Object>>& objectArray);
@@ -66,6 +77,11 @@ namespace HappyMath
 		 * If there is more than one such object, which we return is left undefined.
 		 */
 		std::shared_ptr<Object> FindClosestObjectToPoint(const Vector3& point, double* foundSquareDistance = nullptr);
+
+		/**
+		 * Iterate through all objects of this tree.
+		 */
+		void ForAllObjects(std::function<void(Object*)> objectFunc);
 
 	private:
 
@@ -78,9 +94,11 @@ namespace HappyMath
 			Node();
 			virtual ~Node();
 
-			bool InsertObject(std::shared_ptr<Object> object, const AxisAlignedBoundingBox& objectBox, BoxTree* boxTree);
+			Node* FindInsertionNode(Object* object, const AxisAlignedBoundingBox& objectBox, BoxTree* boxTree);
+			bool FindObjectsOverlappingBox(const AxisAlignedBoundingBox& box, std::vector<std::shared_ptr<Object>>& objectArray);
 			bool FindObjectsOverlappingSphere(const Vector3& center, double radius, std::vector<std::shared_ptr<Object>>& objectArray);
 			std::shared_ptr<Object> FindClosestObjectToPoint(const Vector3& point, double& foundSquareDistance);
+			void ForAllObjects(std::function<void(Object*)> objectFunc);
 
 			std::vector<std::shared_ptr<Object>> objectArray;
 			std::shared_ptr<Node> node[2];

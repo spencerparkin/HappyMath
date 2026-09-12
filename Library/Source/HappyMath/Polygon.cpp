@@ -36,6 +36,11 @@ void Polygon::operator=(const Polygon& polygon)
 		this->vertexArray.push_back(vertex);
 }
 
+void Polygon::operator=(Polygon&& polygon) noexcept
+{
+	this->vertexArray = std::move(polygon.vertexArray);
+}
+
 bool Polygon::IsValid(double tolerance /*= 1e-4*/) const
 {
 	if (this->vertexArray.size() < 3)
@@ -192,6 +197,18 @@ double Polygon::Area(bool assumeConvex /*= true*/) const
 	}
 
 	return area;
+}
+
+void Polygon::CalcBoundingBox(AxisAlignedBoundingBox& box) const
+{
+	box.MakeReadyForExpansion();
+	this->ExpandBox(box);
+}
+
+void Polygon::ExpandBox(AxisAlignedBoundingBox& box) const
+{
+	for (const Vector3& vertex : this->vertexArray)
+		box.Expand(vertex);
 }
 
 bool Polygon::SplitAgainstPlane(const Plane& plane, Polygon& backPolygon, Polygon& frontPolygon, double planeThickness /*= 1e-6*/) const
@@ -1340,6 +1357,50 @@ void Polygon::Restore(std::istream& stream)
 		vertex.Restore(stream);
 		this->vertexArray.push_back(vertex);
 	}
+}
+
+//--------------------------------------------- PolygonObject ---------------------------------------------
+
+PolygonObject::PolygonObject()
+{
+}
+
+PolygonObject::PolygonObject(const Polygon& polygon)
+{
+	this->polygon = polygon;
+}
+
+PolygonObject::PolygonObject(Polygon&& polygon)
+{
+	this->polygon = std::move(polygon);
+}
+
+/*virtual*/ PolygonObject::~PolygonObject()
+{
+}
+
+/*virtual*/ AxisAlignedBoundingBox PolygonObject::GetMinimalBoundingBox() const
+{
+	AxisAlignedBoundingBox box;
+
+	box.MakeReadyForExpansion();
+
+	for (const Vector3& vertex : this->polygon.vertexArray)
+		box.Expand(vertex);
+
+	return box;
+}
+
+/*virtual*/ bool PolygonObject::OverlapsSphere(const Vector3& center, double radius) const
+{
+	// STPTODO: Write this.
+	return false;
+}
+
+/*virtual*/ double PolygonObject::CalcSquareDistanceToPoint(const Vector3& point) const
+{
+	// STPTODO: Write this.
+	return 0.0;
 }
 
 //--------------------------------------------- PolygonBlender ---------------------------------------------

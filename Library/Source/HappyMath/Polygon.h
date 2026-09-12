@@ -2,6 +2,7 @@
 
 #include "HappyMath/Vector3.h"
 #include "HappyMath/Plane.h"
+#include "HappyMath/BoxTree.h"
 #include <vector>
 
 namespace HappyMath
@@ -39,6 +40,7 @@ namespace HappyMath
 		virtual ~Polygon();
 
 		void operator=(const Polygon& polygon);
+		void operator=(Polygon&& polygon) noexcept;
 
 		/**
 		 * Here we make sure that the polygon vertices are all valid and coplanar.
@@ -88,6 +90,16 @@ namespace HappyMath
 		 * @param[in] assumeConvex If true, we do not try to tessellate and recurse.
 		 */
 		double Area(bool assumeConvex = true) const;
+
+		/**
+		 * Calculate and return the smallest AABB containing this polygon.
+		 */
+		void CalcBoundingBox(AxisAlignedBoundingBox& box) const;
+
+		/**
+		 * Expand the given box with this polygon's vertices.
+		 */
+		void ExpandBox(AxisAlignedBoundingBox& box) const;
 
 		/**
 		 * Tell the caller if the given point is a member of the set
@@ -344,6 +356,24 @@ namespace HappyMath
 
 	public:
 		std::vector<Vector3> vertexArray;
+	};
+
+	/**
+	 * 
+	 */
+	class PolygonObject : public BoxTree::Object
+	{
+	public:
+		PolygonObject();
+		PolygonObject(const Polygon& polygon);
+		PolygonObject(Polygon&& polygon);
+		virtual ~PolygonObject();
+
+		virtual AxisAlignedBoundingBox GetMinimalBoundingBox() const override;
+		virtual bool OverlapsSphere(const Vector3& center, double radius) const override;
+		virtual double CalcSquareDistanceToPoint(const Vector3& point) const override;
+
+		Polygon polygon;
 	};
 
 	/**
