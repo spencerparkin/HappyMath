@@ -406,12 +406,32 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	return true;
 }
 
-/*static*/ bool PolygonMesh::CalculateSetOperationPolygons(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB, SetOperationPolygons& setOpPolygons)
+/*static*/ bool PolygonMesh::CalculateSetOperationPolygons(
+									const PolygonMesh& polygonMeshA,
+									const PolygonMesh& polygonMeshB,
+									SetOperationPolygons& setOpPolygons)
 {
 	std::vector<HappyMath::Polygon> polygonArrayA;
-	polygonMeshA.ToStandalonePolygonArray(polygonArrayA);
-
 	std::vector<HappyMath::Polygon> polygonArrayB;
+
+	std::vector<LineSegment> cutSegmentsArray;
+
+	if (!CalculateCutPolygons(polygonMeshA, polygonMeshB, polygonArrayA, polygonArrayB, cutSegmentsArray))
+		return false;
+
+	// STPTODO: Write this.
+
+	return true;
+}
+
+/*static*/ bool PolygonMesh::CalculateCutPolygons(
+									const PolygonMesh& polygonMeshA,
+									const PolygonMesh& polygonMeshB,
+									std::vector<HappyMath::Polygon>& polygonArrayA,
+									std::vector<HappyMath::Polygon>& polygonArrayB,
+									std::vector<LineSegment>& cutSegmentsArray)
+{
+	polygonMeshA.ToStandalonePolygonArray(polygonArrayA);
 	polygonMeshB.ToStandalonePolygonArray(polygonArrayB);
 
 	AxisAlignedBoundingBox meshBBox;
@@ -458,10 +478,12 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 		{
 			HappyMath::Polygon& polygonB = static_cast<PolygonObject*>(objectArray[i].get())->polygon;
 
-			LineSegment lineSegment;
-			if (!lineSegment.Intersect(polygonA, polygonB))
+			LineSegment cutSegment;
+			if (!cutSegment.Intersect(polygonA, polygonB))
 				continue;
 			
+			cutSegmentsArray.push_back(cutSegment);
+
 			Plane planeA = polygonA.CalcPlane(true);
 			Plane planeB = polygonB.CalcPlane(true);
 
@@ -496,8 +518,6 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 		{
 			polygonArrayB.push_back(std::move(static_cast<PolygonObject*>(object)->polygon));
 		});
-
-	// STPTODO: Sort the polygons here.  This is arguably the hardest part.
 
 	return true;
 }

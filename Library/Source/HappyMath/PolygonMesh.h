@@ -97,7 +97,20 @@ namespace HappyMath
 		/**
 		 * This function is used by the @ref CalculateUnion, @ref CAlculateIntersection, and @ref CalculateDifference methods.
 		 */
-		static bool CalculateSetOperationPolygons(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB, SetOperationPolygons& setOpPolygons);
+		static bool CalculateSetOperationPolygons(
+								const PolygonMesh& polygonMeshA,
+								const PolygonMesh& polygonMeshB,
+								SetOperationPolygons& setOpPolygons);
+
+		/**
+		 * This function is used by the @ref CalculateSetOperationPolygons function.
+		 */
+		static bool CalculateCutPolygons(
+								const PolygonMesh& polygonMeshA,
+								const PolygonMesh& polygonMeshB,
+								std::vector<HappyMath::Polygon>& polygonArrayA,
+								std::vector<HappyMath::Polygon>& polygonArrayB,
+								std::vector<LineSegment>& cutSegmentsArray);
 
 		/**
 		 * Generate from this mesh a list of all its polygons, each having its own vertex data.
