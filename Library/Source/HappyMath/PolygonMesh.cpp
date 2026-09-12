@@ -444,7 +444,7 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	meshBBox.Scale(2.0);
 
 	BoxTree boxTreeMeshB;
-	boxTreeMeshB.Reset(meshBBox, meshBBox.GetVolume() / 32.0);
+	boxTreeMeshB.Reset(meshBBox, meshBBox.GetVolume() / 128.0);
 
 	for (HappyMath::Polygon& polygon : polygonArrayB)
 		boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(polygon));
