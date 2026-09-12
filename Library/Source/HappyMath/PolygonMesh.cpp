@@ -482,6 +482,8 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 			if (!cutSegment.Intersect(polygonA, polygonB))
 				continue;
 			
+			// STPTODO: Handle degenerate case here.
+
 			cutSegmentsArray.push_back(cutSegment);
 
 			Plane planeA = polygonA.CalcPlane(true);
@@ -508,10 +510,7 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 		}
 
 		if (!cutHappened)
-		{
 			polygonArrayA.push_back(std::move(polygonA));
-			break;
-		}
 	}
 
 	boxTreeMeshB.ForAllObjects([&polygonArrayB](BoxTree::Object* object) -> void
