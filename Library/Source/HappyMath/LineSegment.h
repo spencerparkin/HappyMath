@@ -6,6 +6,7 @@ namespace HappyMath
 {
 	class Plane;
 	class AxisAlignedBoundingBox;
+	class Polygon;
 
 	/**
 	 * These are simply pairs of points, and we imagine a line connecting them.
@@ -162,6 +163,13 @@ namespace HappyMath
 		 * does matter when using certain method of this class.
 		 */
 		void Reverse();
+
+		/**
+		 * Calculate this line segment as the intersection of the two given
+		 * polygons, assumed to be convex.  We return a degenerate line-segment
+		 * (a point) in the case that the intersection is just a point.
+		 */
+		bool Intersect(const Polygon& polygonA, const Polygon& polygonB);
 
 		/**
 		 * Write this line segment to the given stream in binary form.

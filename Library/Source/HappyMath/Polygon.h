@@ -97,9 +97,10 @@ namespace HappyMath
 		 * @param[in] point This is the point being tested against this polygon for membership in its set of points.
 		 * @param[in] tolerance This is a thickness of the plane of the polygon and a girth of the polygon's edges.
 		 * @param[out] isInterior If given, this is set to true if and only if the given point is approximately on the polygon, but not on an edge or vertex boundary.
+		 * @param[in] cachedPlane If you already have the plane for the polygon, give it here to prevent its needless recalculation.
 		 * @return True is returned if the given point is approximately on this polygon; false, otherwise.
 		 */
-		bool ContainsPoint(const Vector3& point, double tolerance = 1e-5, bool* isInterior = nullptr) const;
+		bool ContainsPoint(const Vector3& point, double tolerance = 1e-5, bool* isInterior = nullptr, const Plane* cachedPlane = nullptr) const;
 
 		/**
 		 * This method does not assume the polygon is convex.

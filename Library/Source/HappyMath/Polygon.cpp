@@ -233,12 +233,12 @@ bool Polygon::SplitAgainstPlane(const Plane& plane, Polygon& backPolygon, Polygo
 	return true;
 }
 
-bool Polygon::ContainsPoint(const Vector3& point, double tolerance /*= 1e-5*/, bool* isInterior /*= nullptr*/) const
+bool Polygon::ContainsPoint(const Vector3& point, double tolerance /*= 1e-5*/, bool* isInterior /*= nullptr*/, const Plane* cachedPlane /*= nullptr*/) const
 {
 	if (isInterior)
 		*isInterior = false;
 
-	Plane plane = this->CalcPlane(true);
+	Plane plane = cachedPlane ? *cachedPlane : this->CalcPlane(true);
 	if (plane.GetSide(point, tolerance) != Plane::Side::NEITHER)
 		return false;
 

@@ -3,7 +3,7 @@
 #include "HappyMath/Matrix2x2.h"
 #include "HappyMath/Vector2.h"
 #include "HappyMath/AxisAlignedBoundingBox.h"
-#include "HappyMath/Plane.h"
+#include "HappyMath/Polygon.h"
 #include "HappyMath/Ray.h"
 #include <algorithm>
 
@@ -314,6 +314,62 @@ void LineSegment::Reverse()
 	Vector3 point = this->point[0];
 	this->point[0] = this->point[1];
 	this->point[1] = point;
+}
+
+bool LineSegment::Intersect(const Polygon& polygonA, const Polygon& polygonB)
+{
+	Plane planeA = polygonA.CalcPlane(true);
+	Plane planeB = polygonB.CalcPlane(true);
+
+	std::vector<Vector3> pointArray;
+
+	auto findHitPoints = [&pointArray](const Polygon& polygon0, const Polygon& polygon1, const Plane& plane0, const Plane& plane1)
+		{
+			for (int i = 0; i < (int)polygon0.vertexArray.size(); i++)
+			{
+				int j = polygon0.Mod(i + 1);
+
+				if (plane1.GetSide(polygon0.vertexArray[i]) == plane1.GetSide(polygon0.vertexArray[j]))
+					continue;
+
+				Vector3 vector = polygon0.vertexArray[j] - polygon0.vertexArray[i];
+				double length = vector.Length();
+				Ray ray(polygon0.vertexArray[i], vector / length);
+				double alpha = ray.CastAgainst(plane1);
+
+				if (0.0 <= alpha && alpha <= length)
+				{
+					Vector3 hitPoint = ray.CalculatePoint(alpha);
+					if (polygon1.ContainsPoint(hitPoint, 1e-5, nullptr, &plane0))
+					{
+						bool foundPoint = false;
+						for (int k = 0; k < (int)pointArray.size() && !foundPoint; k++)
+							foundPoint = pointArray[k].IsPoint(hitPoint);
+
+						if (!foundPoint)
+							pointArray.push_back(hitPoint);
+					}
+				}
+			}
+		};
+
+	findHitPoints(polygonA, polygonB, planeA, planeB);
+	findHitPoints(polygonB, polygonA, planeB, planeA);
+
+	if (pointArray.size() == 2)
+	{
+		this->point[0] = pointArray[0];
+		this->point[1] = pointArray[1];
+		return true;
+	}
+	else if (pointArray.size() == 1)
+	{
+		this->point[0] = pointArray[0];
+		this->point[1] = pointArray[0];
+		return true;
+	}
+
+	return false;
 }
 
 void LineSegment::Dump(std::ostream& stream) const
