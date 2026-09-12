@@ -482,7 +482,8 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 			if (!cutSegment.Intersect(polygonA, polygonB))
 				continue;
 			
-			// STPTODO: Handle degenerate case here.
+			if (cutSegment.IsDegenerate())
+				continue;
 
 			cutSegmentsArray.push_back(cutSegment);
 

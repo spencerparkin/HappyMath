@@ -25,6 +25,11 @@ namespace HappyMath
 		bool IsValid() const;
 
 		/**
+		 * Tell us if this line-segement is just a point.
+		 */
+		bool IsDegenerate(double eps = 1e-6) const;
+
+		/**
 		 * Calculate and return the length of this line segment.
 		 */
 		double Length() const;

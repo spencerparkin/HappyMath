@@ -37,6 +37,11 @@ bool LineSegment::IsValid() const
 	return true;
 }
 
+bool LineSegment::IsDegenerate(double eps /*= 1e-6*/) const
+{
+	return this->point[0].IsPoint(this->point[1], eps);
+}
+
 double LineSegment::Length() const
 {
 	return this->GetDelta().Length();
