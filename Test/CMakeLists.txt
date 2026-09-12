@@ -17,6 +17,12 @@ set(HAPPY_MATH_TEST_SOURCES
 	Source/Test.h
 	Source/App.cpp
 	Source/App.h
+	Source/TestCase.cpp
+	Source/TestCase.h
+	Source/TestSurfaceUnion.cpp
+	Source/TestSurfaceUnion.h
+	Source/TestMeshSetOps.cpp
+	Source/TestMeshSetOps.h
 )
 
 add_executable(HappyMathTest

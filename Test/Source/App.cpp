@@ -1,6 +1,8 @@
 #include "App.h"
-#include "HappyMath/Surface.h"
 #include "HappyMath/Frustum.h"
+#include "TestMeshSetOps.h"
+#include "TestSurfaceUnion.h"
+#include <assert.h>
 
 using namespace HappyMath;
 
@@ -12,10 +14,12 @@ App::App()
 	this->cameraEye.SetComponents(0.0, 0.0, 40.0);
 	this->lastTickTime = 0;
 	this->draggingMouse = false;
+	this->testCase = nullptr;
 }
 
 /*virtual*/ App::~App()
 {
+	assert(this->testCase == nullptr);
 }
 
 bool App::Setup()
@@ -48,28 +52,8 @@ bool App::Setup()
 
 	SDL_GL_SetSwapInterval(1);	// Enable V-sync.
 
-	auto* ellipticalSurface = new EllipticalDonutSurface();
-	ellipticalSurface->A = 10.0;
-	ellipticalSurface->B = 14.0;
-	ellipticalSurface->girthRadius = 3.0;
-
-	auto* sphericalSurface = new SphereSurface(Vector3(8.0, 0.0, 0.0), 10.0);
-
-	// This was an interesting experiment.  It seems to have worked for the most part,
-	// but as expected, the graph algorithm suffers where the surface is not well-behaved.
-	// (i.e., where the surface has discontinuities in the gradient.)  Also, I can't be
-	// sure that the FindNearestPoint function is actually correct in all cases.
-	UnionSurface surface(ellipticalSurface, sphericalSurface);
-
-	if (!this->graph.FromSurface(&surface, 5, 1.0, Vector3(1.0, 0.0, 0.0)))
-		return false;
-
-	this->graph.GenerateEdgeSet(this->edgeSet);
-
-	if (!this->graph.ToPolygonMesh(this->mesh))
-		return false;
-
-	if (!this->mesh.TessellateFaces())
+	this->testCase = new TestSurfaceUnion();
+	if (!this->testCase->Setup())
 		return false;
 
 	this->lastTickTime = SDL_GetTicksNS();
@@ -80,6 +64,13 @@ bool App::Setup()
 
 void App::Shutdown()
 {
+	if (this->testCase)
+	{
+		this->testCase->Shutdown();
+		delete this->testCase;
+		this->testCase = nullptr;
+	}
+
 	if (this->context)
 	{
 		SDL_GL_DestroyContext(this->context);
@@ -182,62 +173,8 @@ void App::Render(double deltaTimeSeconds)
 
 	glEnd();
 
-	glBegin(GL_POINTS);
-	glPointSize(2.0f);
-	glColor3f(1.0f, 0.0f, 0.0f);
-
-	for (int i = 0; i < this->graph.GetNumNodes(); i++)
-	{
-		const Graph::Node* node = this->graph.GetNode(i);
-		const Vector3& vertex = node->GetVertex();
-		glVertex3d(vertex.x, vertex.y, vertex.z);
-	}
-
-	glEnd();
-
-	glBegin(GL_LINES);
-	glColor3f(1.0f, 1.0f, 1.0f);
-
-	for (const Graph::UnorderedEdge& edge : this->edgeSet)
-	{
-		const Graph::Node* nodeA = this->graph.GetNode(edge.i);
-		const Graph::Node* nodeB = this->graph.GetNode(edge.j);
-
-		const Vector3& vertexA = nodeA->GetVertex();
-		const Vector3& vertexB = nodeB->GetVertex();
-
-		glVertex3d(vertexA.x, vertexA.y, vertexA.z);
-		glVertex3d(vertexB.x, vertexB.y, vertexB.z);
-	}
-
-	glEnd();
-
-	glBegin(GL_TRIANGLES);
-
-	double r = 0.1;
-	double g = 0.2;
-	double b = 0.3;
-
-	for (int i = 0; i < this->mesh.GetNumPolygons(); i++)
-	{
-		const PolygonMesh::Polygon& polygon = this->mesh.GetPolygon(i);
-		if (polygon.vertexArray.size() != 3)
-			continue;
-
-		glColor3d(r, g, b);
-
-		r = ::fmod(r + 0.59, 1.0);
-		g = ::fmod(r + 0.72, 1.0);
-		b = ::fmod(r + 0.27, 1.0);
-
-		for (int j = 0; j < (int)polygon.vertexArray.size(); j++)
-		{
-			const Vector3& vertex = this->mesh.GetVertex(polygon.vertexArray[j]);
-			glVertex3d(vertex.x, vertex.y, vertex.z);
-		}
-	}
-
-	glEnd();
+	if (this->testCase)
+		this->testCase->Render();
 
 	SDL_GL_SwapWindow(this->window);
 }
