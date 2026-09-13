@@ -328,13 +328,39 @@ bool LineSegment::Intersect(const Polygon& polygonA, const Polygon& polygonB)
 
 	std::vector<Vector3> pointArray;
 
-	auto findHitPoints = [&pointArray](const Polygon& polygon0, const Polygon& polygon1, const Plane& plane0, const Plane& plane1)
+	auto addPoint = [&pointArray](const Vector3& point) -> void
 		{
+			bool foundPoint = false;
+			for (int k = 0; k < (int)pointArray.size() && !foundPoint; k++)
+				foundPoint = pointArray[k].IsPoint(point);
+
+			if (!foundPoint)
+				pointArray.push_back(point);
+		};
+
+	auto findHitPoints = [addPoint](const Polygon& polygon0, const Polygon& polygon1, const Plane& plane1)
+		{
+			for (int i = 0; i < (int)polygon0.vertexArray.size(); i++)
+			{
+				const Vector3& vertex = polygon0.vertexArray[i];
+
+				if (plane1.GetSide(vertex) == Plane::Side::NEITHER)
+				{
+					if (polygon1.ContainsPoint(vertex, 1e-5, nullptr, &plane1))
+					{
+						addPoint(polygon0.vertexArray[i]);
+					}
+				}
+			}
+
 			for (int i = 0; i < (int)polygon0.vertexArray.size(); i++)
 			{
 				int j = polygon0.Mod(i + 1);
 
-				if (plane1.GetSide(polygon0.vertexArray[i]) == plane1.GetSide(polygon0.vertexArray[j]))
+				Plane::Side sideA = plane1.GetSide(polygon0.vertexArray[i]);
+				Plane::Side sideB = plane1.GetSide(polygon0.vertexArray[j]);
+
+				if (sideA == Plane::Side::NEITHER || sideB == Plane::Side::NEITHER || sideA == sideB)
 					continue;
 
 				Vector3 vector = polygon0.vertexArray[j] - polygon0.vertexArray[i];
@@ -345,21 +371,17 @@ bool LineSegment::Intersect(const Polygon& polygonA, const Polygon& polygonB)
 				if (0.0 <= alpha && alpha <= length)
 				{
 					Vector3 hitPoint = ray.CalculatePoint(alpha);
-					if (polygon1.ContainsPoint(hitPoint, 1e-5, nullptr, &plane0))
-					{
-						bool foundPoint = false;
-						for (int k = 0; k < (int)pointArray.size() && !foundPoint; k++)
-							foundPoint = pointArray[k].IsPoint(hitPoint);
 
-						if (!foundPoint)
-							pointArray.push_back(hitPoint);
+					if (polygon1.ContainsPoint(hitPoint, 1e-5, nullptr, &plane1))
+					{
+						addPoint(hitPoint);
 					}
 				}
 			}
 		};
 
-	findHitPoints(polygonA, polygonB, planeA, planeB);
-	findHitPoints(polygonB, polygonA, planeB, planeA);
+	findHitPoints(polygonA, polygonB, planeB);
+	findHitPoints(polygonB, polygonA, planeA);
 
 	if (pointArray.size() == 2)
 	{
