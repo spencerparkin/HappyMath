@@ -321,7 +321,7 @@ void LineSegment::Reverse()
 	this->point[1] = point;
 }
 
-bool LineSegment::Intersect(const Polygon& polygonA, const Polygon& polygonB)
+bool LineSegment::Intersect(const Polygon& polygonA, const Polygon& polygonB, double planeThickness /*= 1e-5*/, bool* nonTrivialOverlap /*= nullptr*/)
 {
 	Plane planeA = polygonA.CalcPlane(true);
 	Plane planeB = polygonB.CalcPlane(true);
@@ -338,15 +338,15 @@ bool LineSegment::Intersect(const Polygon& polygonA, const Polygon& polygonB)
 				pointArray.push_back(point);
 		};
 
-	auto findHitPoints = [addPoint](const Polygon& polygon0, const Polygon& polygon1, const Plane& plane1)
+	auto findHitPoints = [addPoint, planeThickness](const Polygon& polygon0, const Polygon& polygon1, const Plane& plane1, int& frontCount, int& backCount) -> void
 		{
 			for (int i = 0; i < (int)polygon0.vertexArray.size(); i++)
 			{
 				const Vector3& vertex = polygon0.vertexArray[i];
 
-				if (plane1.GetSide(vertex) == Plane::Side::NEITHER)
+				if (plane1.GetSide(vertex, planeThickness) == Plane::Side::NEITHER)
 				{
-					if (polygon1.ContainsPoint(vertex, 1e-5, nullptr, &plane1))
+					if (polygon1.ContainsPoint(vertex, planeThickness, nullptr, &plane1))
 					{
 						addPoint(polygon0.vertexArray[i]);
 					}
@@ -357,10 +357,15 @@ bool LineSegment::Intersect(const Polygon& polygonA, const Polygon& polygonB)
 			{
 				int j = polygon0.Mod(i + 1);
 
-				Plane::Side sideA = plane1.GetSide(polygon0.vertexArray[i]);
-				Plane::Side sideB = plane1.GetSide(polygon0.vertexArray[j]);
+				Plane::Side side0 = plane1.GetSide(polygon0.vertexArray[i], planeThickness);
+				Plane::Side side1 = plane1.GetSide(polygon0.vertexArray[j], planeThickness);
 
-				if (sideA == Plane::Side::NEITHER || sideB == Plane::Side::NEITHER || sideA == sideB)
+				if (side0 == Plane::Side::FRONT)
+					frontCount++;
+				else if (side0 == Plane::Side::BACK)
+					backCount++;
+
+				if (side0 == Plane::Side::NEITHER || side1 == Plane::Side::NEITHER || side0 == side1)
 					continue;
 
 				Vector3 vector = polygon0.vertexArray[j] - polygon0.vertexArray[i];
@@ -372,7 +377,7 @@ bool LineSegment::Intersect(const Polygon& polygonA, const Polygon& polygonB)
 				{
 					Vector3 hitPoint = ray.CalculatePoint(alpha);
 
-					if (polygon1.ContainsPoint(hitPoint, 1e-5, nullptr, &plane1))
+					if (polygon1.ContainsPoint(hitPoint, planeThickness, nullptr, &plane1))
 					{
 						addPoint(hitPoint);
 					}
@@ -380,8 +385,18 @@ bool LineSegment::Intersect(const Polygon& polygonA, const Polygon& polygonB)
 			}
 		};
 
-	findHitPoints(polygonA, polygonB, planeB);
-	findHitPoints(polygonB, polygonA, planeA);
+	int frontCountA = 0;
+	int frontCountB = 0;
+	int backCountA = 0;
+	int backCountB = 0;
+
+	findHitPoints(polygonA, polygonB, planeB, frontCountA, backCountA);
+	findHitPoints(polygonB, polygonA, planeA, frontCountB, backCountB);
+
+	if (nonTrivialOverlap)
+	{
+		*nonTrivialOverlap = (frontCountA > 0 && backCountA > 0 && frontCountB > 0 && backCountB > 0);
+	}
 
 	if (pointArray.size() == 2)
 	{

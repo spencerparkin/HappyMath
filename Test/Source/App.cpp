@@ -2,16 +2,16 @@
 #include "HappyMath/Frustum.h"
 #include "TestMeshSetOps.h"
 #include "TestSurfaceUnion.h"
+#include "TestPolygonCut.h"
 #include <assert.h>
 
 using namespace HappyMath;
 
-App::App()
+App::App() : controller(0)
 {
 	this->window = nullptr;
 	this->context = nullptr;
 	this->appSetup = false;
-	this->cameraEye.SetComponents(0.0, 0.0, 40.0);
 	this->lastTickTime = 0;
 	this->draggingMouse = false;
 	this->testCase = nullptr;
@@ -54,11 +54,15 @@ bool App::Setup()
 
 	//this->testCase = new TestSurfaceUnion();
 	this->testCase = new TestMeshSetOps();
+	//this->testCase = new TestPolygonCut();
 
 	if (!this->testCase->Setup())
 		return false;
 
 	this->lastTickTime = SDL_GetTicksNS();
+
+	this->camera = std::make_shared<Camera>();
+	this->controller.AddButtonHandler(this->camera);
 
 	this->appSetup = true;
 	return true;
@@ -99,6 +103,9 @@ bool App::Run()
 	// Prevent debugger pauses from being an issue.
 	if (deltaTimeSeconds > 0.5)
 		deltaTimeSeconds = 0.0;
+
+	this->controller.Update();
+	this->camera->Update(&this->controller);
 
 	SDL_Event event;
 
@@ -144,7 +151,8 @@ void App::Render(double deltaTimeSeconds)
 	glLoadIdentity();
 	glMultMatrixd(&projMatrixT.ele[0][0]);
 
-	this->viewToWorld.SetAsViewToWorldTransform(this->cameraEye, Vector3(0.0, 0.0, 0.0), Vector3(0.0, 1.0, 0.0));
+	HappyMath::Matrix4x4 viewToWorld;
+	this->camera->MakeViewToWorldMatrix(viewToWorld);
 
 	HappyMath::Matrix4x4 worldToView;
 	worldToView.Invert(viewToWorld);
@@ -183,6 +191,7 @@ void App::Render(double deltaTimeSeconds)
 
 void App::HandleEvent(SDL_Event& event, double deltaTimeSeconds)
 {
+#if 0
 	switch (event.type)
 	{
 		case SDL_EVENT_MOUSE_MOTION:
@@ -236,4 +245,86 @@ void App::HandleEvent(SDL_Event& event, double deltaTimeSeconds)
 			break;
 		}
 	}
+#endif
+}
+
+//----------------------------------- App::Camera -----------------------------------
+
+App::Camera::Camera()
+{
+	this->eye.SetComponents(0.0, 0.0, 40.0);
+	this->unitLookDir.SetComponents(0.0, 0.0, -1.0);
+	this->strafePlane = StrafePlane::XZ;
+}
+
+void App::Camera::MakeViewToWorldMatrix(HappyMath::Matrix4x4& viewToWorld) const
+{
+	HappyMath::Vector3 cameraUp(0.0, 1.0, 0.0);
+
+	viewToWorld.SetAsViewToWorldTransform(this->eye, this->eye + this->unitLookDir, cameraUp);
+}
+
+void App::Camera::Update(XBoxController* controller)
+{
+	// STPTODO: Use delta time here instead of sensativity variables.
+
+	HappyMath::Vector2 leftThumbStick = controller->GetAnalogJoyStick(XINPUT_GAMEPAD_LEFT_THUMB);
+	HappyMath::Vector2 rightThumbStick = controller->GetAnalogJoyStick(XINPUT_GAMEPAD_RIGHT_THUMB);
+
+	HappyMath::Matrix4x4 viewToWorld;
+	this->MakeViewToWorldMatrix(viewToWorld);
+
+	HappyMath::Vector3 xAxis, yAxis, zAxis;
+	viewToWorld.GetAxes(xAxis, yAxis, zAxis);
+
+	double strafeSensativity = 0.1;
+
+	HappyMath::Vector3 eyeDelta;
+
+	switch (this->strafePlane)
+	{
+	case StrafePlane::XY:
+		eyeDelta = strafeSensativity * (xAxis * leftThumbStick.x + yAxis * leftThumbStick.y);
+		break;
+	case StrafePlane::XZ:
+		eyeDelta = strafeSensativity * (xAxis * leftThumbStick.x - zAxis * leftThumbStick.y);
+		break;
+	}
+
+	this->eye += eyeDelta;
+
+	double lookSensativity = 0.02;
+
+	HappyMath::Vector3 lookDirDelta = lookSensativity * (xAxis * rightThumbStick.x + yAxis * rightThumbStick.y);
+
+	this->unitLookDir += lookDirDelta;
+	this->unitLookDir.Normalize();
+}
+
+/*virtual*/ void App::Camera::OnButtonPressed(DWORD button)
+{
+}
+
+/*virtual*/ void App::Camera::OnButtonReleased(DWORD button)
+{
+	if (button == XINPUT_GAMEPAD_A)
+	{
+		switch (this->strafePlane)
+		{
+		case StrafePlane::XY:
+			this->strafePlane = StrafePlane::XZ;
+			break;
+		case StrafePlane::XZ:
+			this->strafePlane = StrafePlane::XY;
+			break;
+		}
+	}
+}
+
+/*virtual*/ void App::Camera::OnButtonDown(DWORD button)
+{
+}
+
+/*virtual*/ void App::Camera::OnButtonUp(DWORD button)
+{
 }

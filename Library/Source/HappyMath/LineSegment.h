@@ -174,7 +174,7 @@ namespace HappyMath
 		 * polygons, assumed to be convex.  We return a degenerate line-segment
 		 * (a point) in the case that the intersection is just a point.
 		 */
-		bool Intersect(const Polygon& polygonA, const Polygon& polygonB);
+		bool Intersect(const Polygon& polygonA, const Polygon& polygonB, double planeThickness = 1e-5, bool* nonTrivialOverlap = nullptr);
 
 		/**
 		 * Write this line segment to the given stream in binary form.

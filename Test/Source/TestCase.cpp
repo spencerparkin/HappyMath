@@ -1,4 +1,5 @@
 #include "TestCase.h"
+#include "HappyMath/Polygon.h"
 #include <SDL3/SDL_opengl.h>
 
 using namespace HappyMath;
@@ -82,6 +83,42 @@ void TestCase::RenderMeshTriangles(const HappyMath::PolygonMesh& polygonMesh)
 			const Vector3& vertex = polygonMesh.GetVertex(polygon.vertexArray[j]);
 			glVertex3d(vertex.x, vertex.y, vertex.z);
 		}
+	}
+
+	glEnd();
+}
+
+void TestCase::RenderPolygonEdges(const HappyMath::Polygon& polygon, const HappyMath::Vector3& color)
+{
+	glBegin(GL_LINE_LOOP);
+
+	glColor3d(color.x, color.y, color.z);
+
+	for (int i = 0; i < (int)polygon.vertexArray.size(); i++)
+	{
+		const Vector3& vertex = polygon.vertexArray[i];
+
+		glVertex3d(vertex.x, vertex.y, vertex.z);
+	}
+
+	glEnd();
+}
+
+void TestCase::RenderPolygonVertices(const HappyMath::Polygon& polygon, const HappyMath::Vector3& color)
+{
+	glPointSize(4.0f);
+	glBegin(GL_POINTS);
+
+	for (int i = 0; i < (int)polygon.vertexArray.size(); i++)
+	{
+		const Vector3& vertex = polygon.vertexArray[i];
+
+		double mask = 0.1 + 0.9 * (double(i) / double(polygon.vertexArray.size() - 1));
+
+		Vector3 actualColor = mask * color;
+
+		glColor3d(actualColor.x, actualColor.y, actualColor.z);
+		glVertex3d(vertex.x, vertex.y, vertex.z);
 	}
 
 	glEnd();

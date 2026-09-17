@@ -6,6 +6,7 @@
 #include "HappyMath/Plane.h"
 #include <functional>
 #include <assert.h>
+#include <fstream>
 
 using namespace HappyMath;
 
@@ -478,11 +479,16 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 		{
 			HappyMath::Polygon& polygonB = static_cast<PolygonObject*>(objectArray[i].get())->polygon;
 
+			bool nonTrivialOverlap = false;
+
 			LineSegment cutSegment;
-			if (!cutSegment.Intersect(polygonA, polygonB))
+			if (!cutSegment.Intersect(polygonA, polygonB, 1e-5, &nonTrivialOverlap))
 				continue;
 			
 			if (cutSegment.IsDegenerate())
+				continue;
+
+			if (!nonTrivialOverlap)
 				continue;
 
 			cutSegmentsArray.push_back(cutSegment);
@@ -494,6 +500,16 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 
 			HappyMath::Polygon polygonABack, polygonAFront;
 			bool successfulCut = polygonA.SplitAgainstPlane(planeB, polygonABack, polygonAFront);
+
+			if (!successfulCut)
+			{
+				std::ofstream fileStream;
+				fileStream.open(R"(D:\tmp\data.bin)", std::ios::out | std::ios::binary);
+				polygonA.Dump(fileStream);
+				polygonB.Dump(fileStream);
+				fileStream.close();
+			}
+
 			assert(successfulCut);
 
 			HappyMath::Polygon polygonBBack, polygonBFront;

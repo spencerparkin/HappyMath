@@ -23,6 +23,10 @@ set(HAPPY_MATH_TEST_SOURCES
 	Source/TestSurfaceUnion.h
 	Source/TestMeshSetOps.cpp
 	Source/TestMeshSetOps.h
+	Source/TestPolygonCut.cpp
+	Source/TestPolygonCut.h
+	Source/XBoxController.cpp
+	Source/XBoxController.h
 )
 
 add_executable(HappyMathTest
@@ -37,4 +41,5 @@ target_link_libraries(HappyMathTest PRIVATE
 	HappyMath
 	SDL3::SDL3
 	OpenGL::GL
+	Xinput9_1_0.lib
 )

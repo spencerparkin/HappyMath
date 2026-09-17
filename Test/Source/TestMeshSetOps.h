@@ -2,6 +2,7 @@
 
 #include "TestCase.h"
 #include "HappyMath/PolygonMesh.h"
+#include "HappyMath/LineSegment.h"
 
 class TestMeshSetOps : public TestCase
 {
@@ -14,4 +15,5 @@ public:
 
 protected:
 	HappyMath::PolygonMesh cutMeshA, cutMeshB;
+	std::vector<HappyMath::LineSegment> cutSegmentArray;
 };
