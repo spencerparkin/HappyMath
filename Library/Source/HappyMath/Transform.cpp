@@ -5,6 +5,7 @@
 #include "HappyMath/Polygon.h"
 #include "HappyMath/Matrix4x4.h"
 #include "HappyMath/Angle.h"
+#include "HappyMath/PolygonMesh.h"
 
 using namespace HappyMath;
 
@@ -108,6 +109,12 @@ void Transform::TransformPolygon(const Polygon& polygonIn, Polygon& polygonOut) 
 	polygonOut.vertexArray.clear();
 	for (const Vector3& vertex : polygonIn.vertexArray)
 		polygonOut.vertexArray.push_back(this->TransformPoint(vertex));
+}
+
+void Transform::TransformMesh(PolygonMesh& mesh) const
+{
+	for (unsigned int i = 0; i < mesh.GetNumVertices(); i++)
+		mesh.SetVertex(i, this->TransformPoint(mesh.GetVertex(i)));
 }
 
 Transform Transform::Inverted() const

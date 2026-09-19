@@ -177,6 +177,13 @@ namespace HappyMath
 		bool Intersect(const Polygon& polygonA, const Polygon& polygonB, double planeThickness = 1e-5, bool* nonTrivialOverlap = nullptr);
 
 		/**
+		 * Make this line the longest line between three possabilities: this line,
+		 * this line with the first point replaced with the given point, and this line
+		 * with the second point replaced with the given point.
+		 */
+		void Expand(const Vector3& point);
+
+		/**
 		 * Write this line segment to the given stream in binary form.
 		 */
 		void Dump(std::ostream& stream) const;

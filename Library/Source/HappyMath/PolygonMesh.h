@@ -100,7 +100,8 @@ namespace HappyMath
 		static bool CalculateSetOperationPolygons(
 								const PolygonMesh& polygonMeshA,
 								const PolygonMesh& polygonMeshB,
-								SetOperationPolygons& setOpPolygons);
+								SetOperationPolygons& setOpPolygons,
+								double planeThickness = 1e-5);
 
 		/**
 		 * This function is used by the @ref CalculateSetOperationPolygons function.
@@ -110,7 +111,8 @@ namespace HappyMath
 								const PolygonMesh& polygonMeshB,
 								std::vector<HappyMath::Polygon>& polygonArrayA,
 								std::vector<HappyMath::Polygon>& polygonArrayB,
-								std::vector<LineSegment>& cutSegmentsArray);
+								std::vector<LineSegment>& intersectionArray,
+								double planeThickness = 1e-5);
 
 		/**
 		 * Generate from this mesh a list of all its polygons, each having its own vertex data.

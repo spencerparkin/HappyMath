@@ -2,12 +2,16 @@
 #include "HappyMath/Surface.h"
 #include "HappyMath/LineSegment.h"
 #include "HappyMath/Polygon.h"
+#include "HappyMath/Transform.h"
+#include "XBoxController.h"
 #include <SDL3/SDL_opengl.h>
 
 using namespace HappyMath;
 
 TestMeshSetOps::TestMeshSetOps()
 {
+	this->renderMeshA = true;
+	this->renderMeshB = true;
 }
 
 /*virtual*/ TestMeshSetOps::~TestMeshSetOps()
@@ -16,6 +20,7 @@ TestMeshSetOps::TestMeshSetOps()
 
 /*virtual*/ bool TestMeshSetOps::Setup()
 {
+#if 0
 	EllipticalDonutSurface ellipticalSurface;
 	ellipticalSurface.A = 10.0;
 	ellipticalSurface.B = 14.0;
@@ -44,37 +49,60 @@ TestMeshSetOps::TestMeshSetOps()
 	// all polygons have coplanar vertices.
 	meshA.TessellateFaces();
 	meshB.TessellateFaces();
+#endif
+
+	PolygonMesh meshA, meshB;
+
+	meshA.GeneratePolyhedron(PolygonMesh::Polyhedron::HEXADRON, 4.0);
+	meshB.GeneratePolyhedron(PolygonMesh::Polyhedron::HEXADRON, 4.0);
+
+	Transform transform;
+	transform.translation.SetComponents(2.0, 2.0, 2.0);
+	transform.TransformMesh(meshB);
 
 	std::vector<HappyMath::Polygon> polygonArrayA, polygonArrayB;
 	
-	if (!PolygonMesh::CalculateCutPolygons(meshA, meshB, polygonArrayA, polygonArrayB, this->cutSegmentArray))
+	if (!PolygonMesh::CalculateCutPolygons(meshA, meshB, polygonArrayA, polygonArrayB, this->intersectionArray))
 		return false;
 
 	this->cutMeshA.FromStandalonePolygonArray(polygonArrayA);
 	this->cutMeshB.FromStandalonePolygonArray(polygonArrayB);
-
-	this->cutMeshA.TessellateFaces();
-	this->cutMeshB.TessellateFaces();
 
 	return true;
 }
 
 /*virtual*/ bool TestMeshSetOps::Render()
 {
-	this->RenderMeshTriangles(this->cutMeshA);
-	//this->RenderMeshTriangles(this->cutMeshB);
+	if (this->renderMeshA)
+		this->RenderMeshPolygons(this->cutMeshA);
+
+	if (this->renderMeshB)
+		this->RenderMeshPolygons(this->cutMeshB);
 
 	glLineWidth(2.0f);
 	glBegin(GL_LINES);
 
-	for (const LineSegment& cutSegment : this->cutSegmentArray)
+	for (const LineSegment& lineSegment : this->intersectionArray)
 	{
 		glColor3d(1.0, 1.0, 1.0);
-		glVertex3d(cutSegment.point[0].x, cutSegment.point[0].y, cutSegment.point[0].z);
-		glVertex3d(cutSegment.point[1].x, cutSegment.point[1].y, cutSegment.point[1].z);
+		glVertex3d(lineSegment.point[0].x, lineSegment.point[0].y, lineSegment.point[0].z);
+		glVertex3d(lineSegment.point[1].x, lineSegment.point[1].y, lineSegment.point[1].z);
 	}
 
 	glEnd();
 
 	return true;
+}
+
+/*virtual*/ void TestMeshSetOps::HandleController(XBoxController* controller)
+{
+	if (controller->WasButtonPressed(XINPUT_GAMEPAD_X))
+	{
+		this->renderMeshA = !this->renderMeshA;
+	}
+
+	if (controller->WasButtonPressed(XINPUT_GAMEPAD_Y))
+	{
+		this->renderMeshB = !this->renderMeshB;
+	}
 }

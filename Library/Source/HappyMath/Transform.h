@@ -11,6 +11,7 @@ namespace HappyMath
 	class LineSegment;
 	class Matrix4x4;
 	class Polygon;
+	class PolygonMesh;
 
 	/**
 	 * These are affine transformations and can be considered vector-valued functions of a vector variable.
@@ -132,6 +133,13 @@ namespace HappyMath
 		 * @param[out] polygonOut This polygon holds the result.
 		 */
 		void TransformPolygon(const Polygon& polygonIn, Polygon& polygonOut) const;
+
+		/**
+		 * Transform the given polygon mesh.
+		 * 
+		 * @param[in,out] mesh This is the mesh to transform.
+		 */
+		void TransformMesh(PolygonMesh& mesh) const;
 
 		/**
 		 * Transform the origin and direction of the given ray using TransformPoint and TransformVector, respectively.

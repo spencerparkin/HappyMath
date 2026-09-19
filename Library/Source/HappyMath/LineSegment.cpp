@@ -414,6 +414,21 @@ bool LineSegment::Intersect(const Polygon& polygonA, const Polygon& polygonB, do
 	return false;
 }
 
+void LineSegment::Expand(const Vector3& point)
+{
+	double squareLength = this->SquareLength();
+	double squareLengthA = LineSegment(point, this->point[1]).SquareLength();
+	double squareLengthB = LineSegment(this->point[0], point).SquareLength();
+
+	if (squareLength > squareLengthA && squareLength > squareLengthB)
+		return;
+
+	if (squareLengthA > squareLengthB)
+		this->point[0] = point;
+	else
+		this->point[1] = point;
+}
+
 void LineSegment::Dump(std::ostream& stream) const
 {
 	this->point[0].Dump(stream);

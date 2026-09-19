@@ -75,8 +75,8 @@ void TestCase::RenderMeshTriangles(const HappyMath::PolygonMesh& polygonMesh)
 		glColor3d(r, g, b);
 
 		r = ::fmod(r + 0.59, 1.0);
-		g = ::fmod(r + 0.72, 1.0);
-		b = ::fmod(r + 0.27, 1.0);
+		g = ::fmod(g + 0.72, 1.0);
+		b = ::fmod(b + 0.27, 1.0);
 
 		for (int j = 0; j < (int)polygon.vertexArray.size(); j++)
 		{
@@ -86,6 +86,33 @@ void TestCase::RenderMeshTriangles(const HappyMath::PolygonMesh& polygonMesh)
 	}
 
 	glEnd();
+}
+
+void TestCase::RenderMeshPolygons(const HappyMath::PolygonMesh& polygonMesh)
+{
+	double r = 0.1;
+	double g = 0.2;
+	double b = 0.3;
+
+	for (int i = 0; i < polygonMesh.GetNumPolygons(); i++)
+	{
+		const PolygonMesh::Polygon& polygon = polygonMesh.GetPolygon(i);
+
+		glBegin(GL_POLYGON);
+		glColor3d(r, g, b);
+
+		r = ::fmod(r + 0.59, 1.0);
+		g = ::fmod(g + 0.72, 1.0);
+		b = ::fmod(b + 0.27, 1.0);
+
+		for (int j = 0; j < (int)polygon.vertexArray.size(); j++)
+		{
+			const Vector3& vertex = polygonMesh.GetVertex(polygon.vertexArray[j]);
+			glVertex3d(vertex.x, vertex.y, vertex.z);
+		}
+
+		glEnd();
+	}
 }
 
 void TestCase::RenderPolygonEdges(const HappyMath::Polygon& polygon, const HappyMath::Vector3& color)
@@ -122,4 +149,8 @@ void TestCase::RenderPolygonVertices(const HappyMath::Polygon& polygon, const Ha
 	}
 
 	glEnd();
+}
+
+/*virtual*/ void TestCase::HandleController(XBoxController* controller)
+{
 }

@@ -12,8 +12,11 @@ public:
 
 	virtual bool Setup() override;
 	virtual bool Render() override;
+	virtual void HandleController(XBoxController* controller) override;
 
 protected:
 	HappyMath::PolygonMesh cutMeshA, cutMeshB;
-	std::vector<HappyMath::LineSegment> cutSegmentArray;
+	bool renderMeshA;
+	bool renderMeshB;
+	std::vector<HappyMath::LineSegment> intersectionArray;
 };

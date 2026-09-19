@@ -410,14 +410,15 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 /*static*/ bool PolygonMesh::CalculateSetOperationPolygons(
 									const PolygonMesh& polygonMeshA,
 									const PolygonMesh& polygonMeshB,
-									SetOperationPolygons& setOpPolygons)
+									SetOperationPolygons& setOpPolygons,
+									double planeThickness /*= 1e-5*/)
 {
 	std::vector<HappyMath::Polygon> polygonArrayA;
 	std::vector<HappyMath::Polygon> polygonArrayB;
 
-	std::vector<LineSegment> cutSegmentsArray;
+	std::vector<LineSegment> intersectionArray;
 
-	if (!CalculateCutPolygons(polygonMeshA, polygonMeshB, polygonArrayA, polygonArrayB, cutSegmentsArray))
+	if (!CalculateCutPolygons(polygonMeshA, polygonMeshB, polygonArrayA, polygonArrayB, intersectionArray, planeThickness))
 		return false;
 
 	// STPTODO: Write this.
@@ -430,7 +431,8 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 									const PolygonMesh& polygonMeshB,
 									std::vector<HappyMath::Polygon>& polygonArrayA,
 									std::vector<HappyMath::Polygon>& polygonArrayB,
-									std::vector<LineSegment>& cutSegmentsArray)
+									std::vector<LineSegment>& intersectionArray,
+									double planeThickness /*= 1e-5*/)
 {
 	polygonMeshA.ToStandalonePolygonArray(polygonArrayA);
 	polygonMeshB.ToStandalonePolygonArray(polygonArrayB);
@@ -473,60 +475,49 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 			continue;
 		}
 
-		bool cutHappened = false;
+		bool requeuePolygonA = true;
 
 		for (int i = 0; i < (int)objectArray.size(); i++)
 		{
 			HappyMath::Polygon& polygonB = static_cast<PolygonObject*>(objectArray[i].get())->polygon;
 
-			bool nonTrivialOverlap = false;
-
 			LineSegment cutSegment;
-			if (!cutSegment.Intersect(polygonA, polygonB, 1e-5, &nonTrivialOverlap))
+			if (!cutSegment.Intersect(polygonA, polygonB, planeThickness))
 				continue;
 			
 			if (cutSegment.IsDegenerate())
 				continue;
 
-			if (!nonTrivialOverlap)
-				continue;
-
-			cutSegmentsArray.push_back(cutSegment);
+			intersectionArray.push_back(cutSegment);
 
 			Plane planeA = polygonA.CalcPlane(true);
 			Plane planeB = polygonB.CalcPlane(true);
 
-			boxTreeMeshB.RemoveObject(objectArray[i]);
+			bool breakOut = false;
 
 			HappyMath::Polygon polygonABack, polygonAFront;
-			bool successfulCut = polygonA.SplitAgainstPlane(planeB, polygonABack, polygonAFront);
-
-			if (!successfulCut)
+			if (polygonA.SplitAgainstPlane(planeB, polygonABack, polygonAFront))
 			{
-				std::ofstream fileStream;
-				fileStream.open(R"(D:\tmp\data.bin)", std::ios::out | std::ios::binary);
-				polygonA.Dump(fileStream);
-				polygonB.Dump(fileStream);
-				fileStream.close();
+				polygonQueueA.push_back(std::move(polygonABack));
+				polygonQueueA.push_back(std::move(polygonAFront));
+				requeuePolygonA = false;
+				breakOut = true;
 			}
 
-			assert(successfulCut);
-
 			HappyMath::Polygon polygonBBack, polygonBFront;
-			successfulCut = polygonB.SplitAgainstPlane(planeA, polygonBBack, polygonBFront);
-			assert(successfulCut);
+			if (polygonB.SplitAgainstPlane(planeA, polygonBBack, polygonBFront))
+			{
+				boxTreeMeshB.RemoveObject(objectArray[i]);
+				boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(polygonBBack));
+				boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(polygonBFront));
+				breakOut = true;
+			}
 
-			polygonQueueA.push_back(std::move(polygonABack));
-			polygonQueueA.push_back(std::move(polygonAFront));
-
-			boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(polygonBBack));
-			boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(polygonBFront));
-
-			cutHappened = true;
-			break;
+			if (breakOut)
+				break;
 		}
 
-		if (!cutHappened)
+		if (requeuePolygonA)
 			polygonArrayA.push_back(std::move(polygonA));
 	}
 

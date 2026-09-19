@@ -107,6 +107,9 @@ bool App::Run()
 	this->controller.Update();
 	this->camera->Update(&this->controller);
 
+	if (this->testCase)
+		this->testCase->HandleController(&this->controller);
+
 	SDL_Event event;
 
 	while (SDL_PollEvent(&event))
