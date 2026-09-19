@@ -39,11 +39,7 @@ namespace HappyMath
 		 * will be the mesh's vertices.  The graph's edges will be the
 		 * edges of the polygons in the mesh.
 		 * 
-		 * Of course, this isn't the only way to construct a graph from
-		 * a mesh.  You could also let the mesh polygons be the vertices
-		 * and the edges of the graph indicate where polygons are adjacent
-		 * to other polygons.  This has applications in other algorithms,
-		 * such as the union, intersection and difference of meshes.
+		 * See also @ref PolygonGraph.
 		 */
 		bool FromPolygohMesh(const PolygonMesh& mesh);
 

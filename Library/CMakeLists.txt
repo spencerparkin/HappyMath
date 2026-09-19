@@ -36,6 +36,8 @@ set(HAPPY_MATH_SOURCES
 	Source/HappyMath/Polygon.h
 	Source/HappyMath/PolygonMesh.cpp
 	Source/HappyMath/PolygonMesh.h
+	Source/HappyMath/PolygonGraph.cpp
+	Source/HappyMath/PolygonGraph.h
 	Source/HappyMath/Quaternion.cpp
 	Source/HappyMath/Quaternion.h
 	Source/HappyMath/Random.cpp
