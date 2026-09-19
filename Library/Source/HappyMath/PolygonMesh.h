@@ -7,6 +7,7 @@
 namespace HappyMath
 {
 	class Polygon;
+	class PolygonGraph;
 	class Ray;
 
 	/**
@@ -262,6 +263,8 @@ namespace HappyMath
 		Vector3 CalcVertexAverage() const;
 
 	protected:
+		static void BucketSortPolygons(const PolygonGraph& graph, const PolygonMesh& mesh, std::vector<HappyMath::Polygon>& insidePolygonArray, std::vector<HappyMath::Polygon>& outsidePolygonArray);
+
 		std::vector<Vector3> vertexArray;
 		std::vector<Polygon> polygonArray;
 	};

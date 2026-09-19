@@ -1,6 +1,7 @@
 #include "HappyMath/PolygonMesh.h"
 #include "HappyMath/Polygon.h"
 #include "HappyMath/Graph.h"
+#include "HappyMath/PolygonGraph.h"
 #include "HappyMath/ExpandingPolytopeAlgorithm.h"
 #include "HappyMath/LineSegment.h"
 #include "HappyMath/Plane.h"
@@ -9,6 +10,36 @@
 #include <fstream>
 
 using namespace HappyMath;
+
+//--------------------------- LabeledPolygonNode ---------------------------
+
+namespace HappyMath
+{
+	/**
+	 *
+	 */
+	class LabeledPolygonNode : public PolygonGraph::Node
+	{
+	public:
+		LabeledPolygonNode()
+		{
+			this->label = Label::UNKNOWN;
+		}
+
+		virtual ~LabeledPolygonNode()
+		{
+		}
+
+		enum Label
+		{
+			UNKNOWN,
+			INSIDE,
+			OUTSIDE
+		};
+
+		Label label;
+	};
+}
 
 //--------------------------- PolygonMesh::Polygon ---------------------------
 
@@ -421,9 +452,54 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	if (!CalculateCutPolygons(polygonMeshA, polygonMeshB, polygonArrayA, polygonArrayB, intersectionArray, planeThickness))
 		return false;
 
-	// STPTODO: Write this.
+	PolygonMesh cutMeshA, cutMeshB;
+
+	cutMeshA.FromStandalonePolygonArray(polygonArrayA);
+	cutMeshB.FromStandalonePolygonArray(polygonArrayB);
+
+	PolygonGraph graphA, graphB;
+
+	auto nodeFactory = []() -> PolygonGraph::Node* { return new LabeledPolygonNode(); };
+
+	graphA.Regenerate(cutMeshA, nodeFactory);
+	graphB.Regenerate(cutMeshB, nodeFactory);
+
+	// STPTODO: Label polygons here.
+
+	setOpPolygons.insidePolygonsA.clear();
+	setOpPolygons.insidePolygonsB.clear();
+	setOpPolygons.outsidePolygonsA.clear();
+	setOpPolygons.outsidePolygonsB.clear();
+
+	BucketSortPolygons(graphA, cutMeshA, setOpPolygons.insidePolygonsA, setOpPolygons.outsidePolygonsA);
+	BucketSortPolygons(graphB, cutMeshB, setOpPolygons.insidePolygonsB, setOpPolygons.outsidePolygonsB);
 
 	return true;
+}
+
+/*static*/ void PolygonMesh::BucketSortPolygons(
+									const PolygonGraph& graph,
+									const PolygonMesh& mesh,
+									std::vector<HappyMath::Polygon>& insidePolygonArray,
+									std::vector<HappyMath::Polygon>& outsidePolygonArray)
+{
+	for (const PolygonGraph::Node* node : graph.GetNodeArray())
+	{
+		HappyMath::Polygon standardPolygon;
+		node->polygon->ToStandalonePolygon(standardPolygon, &mesh);
+
+		auto labeledNode = static_cast<const LabeledPolygonNode*>(node);
+
+		switch (labeledNode->label)
+		{
+		case LabeledPolygonNode::Label::INSIDE:
+			insidePolygonArray.push_back(std::move(standardPolygon));
+			break;
+		case LabeledPolygonNode::Label::OUTSIDE:
+			outsidePolygonArray.push_back(std::move(standardPolygon));
+			break;
+		}
+	}
 }
 
 /*static*/ bool PolygonMesh::CalculateCutPolygons(

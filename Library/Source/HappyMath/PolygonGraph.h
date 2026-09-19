@@ -49,6 +49,8 @@ namespace HappyMath
 		 */
 		bool Regenerate(const PolygonMesh& mesh, std::function<Node* ()> nodeFactory = []() -> Node* { return new Node(); });
 
+		const std::vector<Node*> GetNodeArray() const { return this->nodeArray; }
+
 	private:
 		std::vector<Node*> nodeArray;
 	};
