@@ -79,14 +79,13 @@ TestMeshSetOps::TestMeshSetOps()
 	if (this->renderMeshB)
 		this->RenderMeshPolygons(this->cutMeshB);
 
-	glLineWidth(2.0f);
-	glBegin(GL_LINES);
+	glPointSize(4.0f);
+	glBegin(GL_POINTS);
 
-	for (const LineSegment& lineSegment : this->intersectionArray)
+	for (const Vector3& point : this->intersectionArray)
 	{
 		glColor3d(1.0, 1.0, 1.0);
-		glVertex3d(lineSegment.point[0].x, lineSegment.point[0].y, lineSegment.point[0].z);
-		glVertex3d(lineSegment.point[1].x, lineSegment.point[1].y, lineSegment.point[1].z);
+		glVertex3dv(&point.x);
 	}
 
 	glEnd();

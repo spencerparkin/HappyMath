@@ -416,7 +416,7 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	std::vector<HappyMath::Polygon> polygonArrayA;
 	std::vector<HappyMath::Polygon> polygonArrayB;
 
-	std::vector<LineSegment> intersectionArray;
+	std::vector<Vector3> intersectionArray;
 
 	if (!CalculateCutPolygons(polygonMeshA, polygonMeshB, polygonArrayA, polygonArrayB, intersectionArray, planeThickness))
 		return false;
@@ -431,7 +431,7 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 									const PolygonMesh& polygonMeshB,
 									std::vector<HappyMath::Polygon>& polygonArrayA,
 									std::vector<HappyMath::Polygon>& polygonArrayB,
-									std::vector<LineSegment>& intersectionArray,
+									std::vector<Vector3>& intersectionArray,
 									double planeThickness /*= 1e-5*/)
 {
 	polygonMeshA.ToStandalonePolygonArray(polygonArrayA);
@@ -488,12 +488,10 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 			if (cutSegment.IsDegenerate())
 				continue;
 
-			intersectionArray.push_back(cutSegment);
-
 			Plane planeA = polygonA.CalcPlane(true);
 			Plane planeB = polygonB.CalcPlane(true);
 
-			bool breakOut = false;
+			bool cutOccurred = false;
 
 			HappyMath::Polygon polygonABack, polygonAFront;
 			if (polygonA.SplitAgainstPlane(planeB, polygonABack, polygonAFront))
@@ -501,7 +499,7 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 				polygonQueueA.push_back(std::move(polygonABack));
 				polygonQueueA.push_back(std::move(polygonAFront));
 				requeuePolygonA = false;
-				breakOut = true;
+				cutOccurred = true;
 			}
 
 			HappyMath::Polygon polygonBBack, polygonBFront;
@@ -510,11 +508,15 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 				boxTreeMeshB.RemoveObject(objectArray[i]);
 				boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(polygonBBack));
 				boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(polygonBFront));
-				breakOut = true;
+				cutOccurred = true;
 			}
 
-			if (breakOut)
+			if (cutOccurred)
+			{
+				intersectionArray.push_back(cutSegment.point[0]);
+				intersectionArray.push_back(cutSegment.point[1]);
 				break;
+			}
 		}
 
 		if (requeuePolygonA)

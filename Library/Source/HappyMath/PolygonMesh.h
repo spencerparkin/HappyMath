@@ -111,7 +111,7 @@ namespace HappyMath
 								const PolygonMesh& polygonMeshB,
 								std::vector<HappyMath::Polygon>& polygonArrayA,
 								std::vector<HappyMath::Polygon>& polygonArrayB,
-								std::vector<LineSegment>& intersectionArray,
+								std::vector<Vector3>& intersectionArray,
 								double planeThickness = 1e-5);
 
 		/**

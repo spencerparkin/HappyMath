@@ -18,5 +18,5 @@ protected:
 	HappyMath::PolygonMesh cutMeshA, cutMeshB;
 	bool renderMeshA;
 	bool renderMeshB;
-	std::vector<HappyMath::LineSegment> intersectionArray;
+	std::vector<HappyMath::Vector3> intersectionArray;
 };
