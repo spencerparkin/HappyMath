@@ -432,7 +432,7 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 		polygonArray.push_back(std::move(polygon));
 
 	for (HappyMath::Polygon& polygon : setOpPolygons.insidePolygonsB)
-		polygonArray.push_back(std::move(polygon));
+		polygonArray.push_back(std::move(polygon));		// STPTODO: Need to flip winding order.
 
 	this->FromStandalonePolygonArray(polygonArray);
 	return true;
