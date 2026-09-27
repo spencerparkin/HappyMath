@@ -102,6 +102,11 @@ namespace HappyMath
 		void ExpandBox(AxisAlignedBoundingBox& box) const;
 
 		/**
+		 * Copy the given polygon, but reverse the winding order of the vertices.
+		 */
+		void ReverseWinding(const Polygon& polygon);
+
+		/**
 		 * Tell the caller if the given point is a member of the set
 		 * of points constituting this polygon.  This method assumes
 		 * the polygon is convex.

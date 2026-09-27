@@ -8,6 +8,7 @@ namespace HappyMath
 {
 	class Plane;
 	class LineSegment;
+	class Sphere;
 
 	/**
 	 * An AABB for short, these boxes whose sides are parallel to the XY, YZ or XZ planes.
@@ -213,11 +214,8 @@ namespace HappyMath
 
 		/**
 		 * Calculate and return the tightest sphere containing this AABB.
-		 * 
-		 * @param[out] center This is the center of the returned sphere.
-		 * @param[out] radius This is the radius of the returned sphere.
 		 */
-		void GetToSphere(Vector3& center, double& radius) const;
+		void GetToSphere(Sphere& sphere) const;
 
 		/**
 		 * Calculate this AABB as the smallest one containing the given sphere.

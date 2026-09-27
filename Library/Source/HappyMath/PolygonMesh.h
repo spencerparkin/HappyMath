@@ -9,6 +9,8 @@ namespace HappyMath
 	class Polygon;
 	class PolygonGraph;
 	class Ray;
+	class AxisAlignedBoundingBox;
+	class Sphere;
 
 	/**
 	 * These are sets of polygons that share a set of vertices.
@@ -16,6 +18,8 @@ namespace HappyMath
 	class HAPPY_MATH_API PolygonMesh
 	{
 	public:
+		class Polygon;
+
 		PolygonMesh();
 		PolygonMesh(const PolygonMesh& polygonMesh);
 		virtual ~PolygonMesh();
@@ -148,9 +152,15 @@ namespace HappyMath
 		 * @param[in] ray This is the ray to use in the ray-cast.
 		 * @param[out] alpha This is the distance from the ray origin along the ray-direction to the point where a mesh polygon is hit, if any.
 		 * @param[out] unitSurfaceNormal This is the surface normal of the polygon at the ray hit-point, if any.  It will always make an obtuse angle with the ray direction vector.
+		 * @param[out] hitPolygon If non-null, will be set to the polygon hit by the ray.
 		 * @return True is returned if and only if the given ray hits this mesh.
 		 */
-		bool RayCast(const Ray& ray, double& alpha, Vector3& unitSurfaceNormal) const;
+		bool RayCast(const Ray& ray, double& alpha, Vector3& unitSurfaceNormal, const PolygonMesh::Polygon** hitPolygon = nullptr) const;
+
+		/**
+		 * Minimally expand the given box to include the vertices of this mesh.
+		 */
+		void Expand(AxisAlignedBoundingBox& box) const;
 
 		enum class Polyhedron
 		{
@@ -263,7 +273,9 @@ namespace HappyMath
 		Vector3 CalcVertexAverage() const;
 
 	protected:
-		static void BucketSortPolygons(const PolygonGraph& graph, const PolygonMesh& mesh, std::vector<HappyMath::Polygon>& insidePolygonArray, std::vector<HappyMath::Polygon>& outsidePolygonArray);
+		static bool BucketSortPolygons(const PolygonGraph& graph, const PolygonMesh& mesh, std::vector<HappyMath::Polygon>& insidePolygonArray, std::vector<HappyMath::Polygon>& outsidePolygonArray);
+
+		static bool LabelPolygons(PolygonGraph& graph, PolygonMesh& mesh, PolygonMesh& otherMesh, const Sphere& sphere, const std::vector<Vector3>& intersectionArray);
 
 		std::vector<Vector3> vertexArray;
 		std::vector<Polygon> polygonArray;

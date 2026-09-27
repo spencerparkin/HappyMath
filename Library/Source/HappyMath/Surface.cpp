@@ -1,4 +1,5 @@
 #include "Surface.h"
+#include "Sphere.h"
 #include "Function.h"
 
 using namespace HappyMath;
@@ -55,7 +56,7 @@ SphereSurface::SphereSurface(const Vector3& center, double radius)
 /*virtual*/ bool SphereSurface::RayCast(const Ray& ray, Vector3& surfacePoint, Vector3& surfaceNormal) const
 {
 	double alpha;
-	if (!ray.CastAgainstSphere(this->center, this->radius, alpha))
+	if (!ray.CastAgainst(Sphere(this->center, this->radius), alpha))
 		return false;
 
 	surfacePoint = ray.CalculatePoint(alpha);

@@ -8,6 +8,7 @@ namespace HappyMath
 	class Plane;
 	class AxisAlignedBoundingBox;
 	class LineSegment;
+	class Sphere;
 
 	/**
 	 * A ray here is described by a point and unit-length vector pair.  The ray starts
@@ -103,7 +104,7 @@ namespace HappyMath
 		 * @param[out] alpha The distance from ray origin to the hit point, if any.
 		 * @return True is returned if the ray hits the sphere; false, otherwise.
 		 */
-		bool CastAgainstSphere(const Vector3& center, double radius, double& alpha) const;
+		bool CastAgainst(const Sphere& sphere, double& alpha) const;
 
 		/**
 		 * Cast this ray against the given disk.

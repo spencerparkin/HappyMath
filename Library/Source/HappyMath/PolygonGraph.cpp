@@ -88,6 +88,15 @@ bool PolygonGraph::Regenerate(const PolygonMesh& mesh, std::function<Node*()> no
 	return true;
 }
 
+PolygonGraph::Node* PolygonGraph::FindNodeForPolygon(const PolygonMesh::Polygon* polygon)
+{
+	for (PolygonGraph::Node* node : this->nodeArray)
+		if (node->polygon == polygon)
+			return node;
+
+	return nullptr;
+}
+
 //----------------------------- PolygonGraph::Node -----------------------------
 
 PolygonGraph::Node::Node()

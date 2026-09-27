@@ -49,6 +49,11 @@ namespace HappyMath
 		 */
 		bool Regenerate(const PolygonMesh& mesh, std::function<Node* ()> nodeFactory = []() -> Node* { return new Node(); });
 
+		/**
+		 * Perform a linear search for the node owning the given polygon.
+		 */
+		Node* FindNodeForPolygon(const PolygonMesh::Polygon* polygon);
+
 		const std::vector<Node*> GetNodeArray() const { return this->nodeArray; }
 
 	private:

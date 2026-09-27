@@ -3,6 +3,7 @@
 #include "HappyMath/AxisAlignedBoundingBox.h"
 #include "HappyMath/LineSegment.h"
 #include "HappyMath/Function.h"
+#include "HappyMath/Sphere.h"
 #include <algorithm>
 
 using namespace HappyMath;
@@ -136,14 +137,14 @@ bool Ray::CastAgainst(const AxisAlignedBoundingBox& box, Interval& interval, dou
 	return interval.MakesSense();
 }
 
-bool Ray::CastAgainstSphere(const Vector3& center, double radius, double& alpha) const
+bool Ray::CastAgainst(const Sphere& sphere, double& alpha) const
 {
-	Vector3 vector = this->origin - center;
+	Vector3 vector = this->origin - sphere.center;
 
 	Quadratic quadratic;
 	quadratic.A = 1.0;
 	quadratic.B = 2.0 * this->unitDirection.Dot(vector);
-	quadratic.C = vector.SquareLength() - radius * radius;
+	quadratic.C = vector.SquareLength() - sphere.radius * sphere.radius;
 
 	std::vector<double> realRoots;
 	quadratic.Solve(realRoots);

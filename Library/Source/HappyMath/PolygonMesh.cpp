@@ -5,9 +5,12 @@
 #include "HappyMath/ExpandingPolytopeAlgorithm.h"
 #include "HappyMath/LineSegment.h"
 #include "HappyMath/Plane.h"
+#include "HappyMath/Ray.h"
+#include "HappyMath/Sphere.h"
 #include <functional>
 #include <assert.h>
 #include <fstream>
+#include <unordered_set>
 
 using namespace HappyMath;
 
@@ -411,10 +414,18 @@ bool PolygonMesh::CalculateIntersection(const PolygonMesh& polygonMeshA, const P
 	std::vector<HappyMath::Polygon> polygonArray;
 
 	for (HappyMath::Polygon& polygon : setOpPolygons.insidePolygonsA)
-		polygonArray.push_back(std::move(polygon));
+	{
+		HappyMath::Polygon reversePolygon;
+		reversePolygon.ReverseWinding(polygon);
+		polygonArray.push_back(std::move(reversePolygon));
+	}
 
 	for (HappyMath::Polygon& polygon : setOpPolygons.insidePolygonsB)
-		polygonArray.push_back(std::move(polygon));
+	{
+		HappyMath::Polygon reversePolygon;
+		reversePolygon.ReverseWinding(polygon);
+		polygonArray.push_back(std::move(reversePolygon));
+	}
 
 	this->FromStandalonePolygonArray(polygonArray);
 	return true;
@@ -432,7 +443,11 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 		polygonArray.push_back(std::move(polygon));
 
 	for (HappyMath::Polygon& polygon : setOpPolygons.insidePolygonsB)
-		polygonArray.push_back(std::move(polygon));		// STPTODO: Need to flip winding order.
+	{
+		HappyMath::Polygon reversePolygon;
+		reversePolygon.ReverseWinding(polygon);
+		polygonArray.push_back(std::move(reversePolygon));
+	}
 
 	this->FromStandalonePolygonArray(polygonArray);
 	return true;
@@ -464,20 +479,160 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	graphA.Regenerate(cutMeshA, nodeFactory);
 	graphB.Regenerate(cutMeshB, nodeFactory);
 
-	// STPTODO: Label polygons here.
+	AxisAlignedBoundingBox box;
+	box.MakeReadyForExpansion();
+	cutMeshA.Expand(box);
+	cutMeshB.Expand(box);
+	
+	Sphere sphere;
+	box.GetToSphere(sphere);
+
+	if (!LabelPolygons(graphA, cutMeshA, cutMeshB, sphere, intersectionArray))
+		return false;
+
+	if (!LabelPolygons(graphB, cutMeshB, cutMeshA, sphere, intersectionArray))
+		return false;
 
 	setOpPolygons.insidePolygonsA.clear();
 	setOpPolygons.insidePolygonsB.clear();
 	setOpPolygons.outsidePolygonsA.clear();
 	setOpPolygons.outsidePolygonsB.clear();
 
-	BucketSortPolygons(graphA, cutMeshA, setOpPolygons.insidePolygonsA, setOpPolygons.outsidePolygonsA);
-	BucketSortPolygons(graphB, cutMeshB, setOpPolygons.insidePolygonsB, setOpPolygons.outsidePolygonsB);
+	if (!BucketSortPolygons(graphA, cutMeshA, setOpPolygons.insidePolygonsA, setOpPolygons.outsidePolygonsA))
+		return false;
+
+	if (!BucketSortPolygons(graphB, cutMeshB, setOpPolygons.insidePolygonsB, setOpPolygons.outsidePolygonsB))
+		return false;
 
 	return true;
 }
 
-/*static*/ void PolygonMesh::BucketSortPolygons(
+/*static*/ bool PolygonMesh::LabelPolygons(
+									PolygonGraph& graph,
+									PolygonMesh& mesh,
+									PolygonMesh& otherMesh,
+									const Sphere& sphere,
+									const std::vector<Vector3>& intersectionArray)
+{
+	LabeledPolygonNode* node = nullptr;
+
+	for (Polygon& polygon : mesh.polygonArray)
+	{
+		HappyMath::Polygon standardPolygon;
+		polygon.ToStandalonePolygon(standardPolygon, &mesh);
+
+		// Shoot a ray from the polygon's center out to the surface of the give sphere.
+		// The given sphere should encompass both meshes.
+		Plane plane = standardPolygon.CalcPlane(true);
+		Ray ray(standardPolygon.CalcCenter(), plane.unitNormal);
+		double alpha = 0.0;
+		if (!ray.CastAgainst(sphere, alpha))
+			return false;
+
+		// Now shoot a ray that points from the surface of the sphere toward the center of the polygon.
+		// This ray-cast might be overkill, but it is necessary if we're trying to find a polygon that
+		// is guarenteed visible from the outside.
+		ray.origin = ray.CalculatePoint(alpha);
+		ray.unitDirection = -plane.unitNormal;
+		Vector3 unitSurfaceNormal;
+		const Polygon* hitPolygon = nullptr;
+		if (!mesh.RayCast(ray, alpha, unitSurfaceNormal, &hitPolygon) || hitPolygon != &polygon)
+			continue;
+
+		// At this point we know the ray hits the polygon unobstructed by any other part of the
+		// mesh, but it also needs to do so unobstructed by the other mesh.  Only then do we know
+		// that the polygon is truely and outside polygon.
+		double beta = 0.0;
+		if (!otherMesh.RayCast(ray, beta, unitSurfaceNormal) || beta > alpha)
+		{
+			node = static_cast<LabeledPolygonNode*>(graph.FindNodeForPolygon(hitPolygon));
+			assert(node != nullptr);
+			node->label = LabeledPolygonNode::Label::OUTSIDE;
+			break;
+		}
+	}
+
+	// We fail here and now if we never found an initial outside polygon.
+	if (!node)
+		return false;
+
+	// Identify the vertices that make up the boundary between the two meshes.
+	std::unordered_set<int> boundaryVertexSet;
+	for (const Vector3& vertex : intersectionArray)
+	{
+		int i = mesh.FindVertex(vertex);
+		assert(i != -1);
+		if (i == -1)
+			return false;
+
+		boundaryVertexSet.insert(i);
+	}
+
+	// Lastly, walk the mesh (BFS-style) and label the polygons as we go.
+	// We flip from inside to outside (or vice-versa) whenever we cross
+	// the boundary between the two meshes.
+	std::list<LabeledPolygonNode*> nodeQueue;
+	nodeQueue.push_back(node);
+
+	std::vector<int> commonVertices;
+
+	while (nodeQueue.size() > 0)
+	{
+		node = *nodeQueue.begin();
+		nodeQueue.pop_front();
+
+		assert(node->label != LabeledPolygonNode::UNKNOWN);
+
+		for (int i = 0; i < (int)node->adjacentNodeArray.size(); i++)
+		{
+			auto adjacentNode = static_cast<LabeledPolygonNode*>(node->adjacentNodeArray[i]);
+
+			// If the adjacent node is already queued, we're done.
+			if (adjacentNode->label != LabeledPolygonNode::UNKNOWN)
+				continue;
+
+			commonVertices.clear();
+
+			for (int j = 0; j < (int)node->polygon->vertexArray.size(); j++)
+				if (adjacentNode->polygon->HasVertex(node->polygon->vertexArray[j]))
+					commonVertices.push_back(node->polygon->vertexArray[j]);
+
+			assert(commonVertices.size() >= 2);
+
+			bool boundaryCrossed = true;
+
+			for (int vertex : commonVertices)
+			{
+				if (boundaryVertexSet.find(vertex) == boundaryVertexSet.end())
+				{
+					boundaryCrossed = false;
+					break;
+				}
+			}
+
+			if (!boundaryCrossed)
+				adjacentNode->label = node->label;
+			else
+			{
+				switch (node->label)
+				{
+				case LabeledPolygonNode::INSIDE:
+					adjacentNode->label = LabeledPolygonNode::OUTSIDE;
+					break;
+				case LabeledPolygonNode::OUTSIDE:
+					adjacentNode->label = LabeledPolygonNode::INSIDE;
+					break;
+				}
+			}
+
+			nodeQueue.push_back(adjacentNode);
+		}
+	}
+
+	return true;
+}
+
+/*static*/ bool PolygonMesh::BucketSortPolygons(
 									const PolygonGraph& graph,
 									const PolygonMesh& mesh,
 									std::vector<HappyMath::Polygon>& insidePolygonArray,
@@ -498,8 +653,12 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 		case LabeledPolygonNode::Label::OUTSIDE:
 			outsidePolygonArray.push_back(std::move(standardPolygon));
 			break;
+		default:
+			return false;
 		}
 	}
+
+	return true;
 }
 
 /*static*/ bool PolygonMesh::CalculateCutPolygons(
@@ -670,8 +829,11 @@ void PolygonMesh::FromStandalonePolygonArray(const std::vector<HappyMath::Polygo
 	}
 }
 
-bool PolygonMesh::RayCast(const Ray& ray, double& alpha, Vector3& unitSurfaceNormal) const
+bool PolygonMesh::RayCast(const Ray& ray, double& alpha, Vector3& unitSurfaceNormal, const Polygon** hitPolygon /*= nullptr*/) const
 {
+	if (hitPolygon)
+		*hitPolygon = nullptr;
+
 	alpha = std::numeric_limits<double>::max();
 
 	for (const Polygon& polygon : this->polygonArray)
@@ -686,11 +848,19 @@ bool PolygonMesh::RayCast(const Ray& ray, double& alpha, Vector3& unitSurfaceNor
 			{
 				alpha = polygonAlpha;
 				unitSurfaceNormal = polygonNormal;
+
+				if (hitPolygon)
+					*hitPolygon = &polygon;
 			}
 		}
 	}
 
 	return alpha != std::numeric_limits<double>::max();
+}
+
+void PolygonMesh::Expand(AxisAlignedBoundingBox& box) const
+{
+	box.Expand(this->vertexArray);
 }
 
 void PolygonMesh::Dump(std::ostream& stream) const

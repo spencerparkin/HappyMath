@@ -211,6 +211,15 @@ void Polygon::ExpandBox(AxisAlignedBoundingBox& box) const
 		box.Expand(vertex);
 }
 
+void Polygon::ReverseWinding(const Polygon& polygon)
+{
+	this->vertexArray.clear();
+	this->vertexArray.reserve(polygon.vertexArray.size());
+
+	for (int i = (int)polygon.vertexArray.size() - 1; i >= 0; i--)
+		this->vertexArray.push_back(polygon.vertexArray[i]);
+}
+
 bool Polygon::SplitAgainstPlane(const Plane& plane, Polygon& backPolygon, Polygon& frontPolygon, double planeThickness /*= 1e-6*/) const
 {
 	backPolygon.vertexArray.clear();

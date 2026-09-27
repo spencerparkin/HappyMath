@@ -52,6 +52,8 @@ set(HAPPY_MATH_SOURCES
 	Source/HappyMath/StackHeap.h
 	Source/HappyMath/Surface.cpp
 	Source/HappyMath/Surface.h
+	Source/HappyMath/Sphere.cpp
+	Source/HappyMath/Sphere.h
 	Source/HappyMath/Transform.cpp
 	Source/HappyMath/Transform.h
 	Source/HappyMath/Vector2.cpp

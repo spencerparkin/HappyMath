@@ -2,6 +2,7 @@
 #include "HappyMath/LineSegment.h"
 #include "HappyMath/Plane.h"
 #include "HappyMath/Interval.h"
+#include "HappyMath/Sphere.h"
 #include <algorithm>
 
 using namespace HappyMath;
@@ -441,10 +442,10 @@ double AxisAlignedBoundingBox::GetVolume() const
 	return width * height * depth;
 }
 
-void AxisAlignedBoundingBox::GetToSphere(Vector3& center, double& radius) const
+void AxisAlignedBoundingBox::GetToSphere(Sphere& sphere) const
 {
-	center = this->GetCenter();
-	radius = (this->maxCorner - center).Length();
+	sphere.center = this->GetCenter();
+	sphere.radius = (this->maxCorner - sphere.center).Length();
 }
 
 void AxisAlignedBoundingBox::SetFromSphere(const Vector3& center, double radius)
