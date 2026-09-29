@@ -565,11 +565,8 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	for (const Vector3& vertex : intersectionArray)
 	{
 		int i = mesh.FindVertex(vertex);
-		HM_ASSERT(i != -1);
-		if (i == -1)
-			return false;
-
-		boundaryVertexSet.insert(i);
+		if (i != -1)
+			boundaryVertexSet.insert(i);
 	}
 
 	// Lastly, walk the mesh (BFS-style) and label the polygons as we go.
@@ -590,6 +587,13 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 		for (int i = 0; i < (int)node->adjacentNodeArray.size(); i++)
 		{
 			auto adjacentNode = static_cast<LabeledPolygonNode*>(node->adjacentNodeArray[i]);
+			
+			// Note that there may be an issue if the entire mesh can't be traversed in a single BFS.
+			// Some redundant vertices in the mesh may need to be created in order to guarentee that.
+			// That would be simple matter of adding an existing vertex to a polygon that has it on
+			// an edge, but doesn't really need it.
+			if (!adjacentNode)
+				continue;
 
 			// If the adjacent node is already queued, we're done.
 			if (adjacentNode->label != LabeledPolygonNode::UNKNOWN)
