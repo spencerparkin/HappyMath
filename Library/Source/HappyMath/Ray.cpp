@@ -155,12 +155,26 @@ bool Ray::CastAgainst(const Sphere& sphere, double& alpha) const
 	if (realRoots.size() != 1 && realRoots.size() != 2)
 		return false;
 
-	if (realRoots.size() == 2)
-		alpha = realRoots[0] < realRoots[1] ? realRoots[0] : realRoots[1];
-	else
+	if (realRoots.size() == 1)
+	{
 		alpha = realRoots[0];
+	}
+	else if (realRoots[0] < realRoots[1])
+	{
+		if (realRoots[0] >= 0.0)
+			alpha = realRoots[0];
+		else
+			alpha = realRoots[1];
+	}
+	else
+	{
+		if (realRoots[1] >= 0.0)
+			alpha = realRoots[1];
+		else
+			alpha = realRoots[0];
+	}
 
-	return true;
+	return alpha >= 0.0;
 }
 
 bool Ray::CastAgainstDisk(const Vector3& center, const Vector3& unitNormal, double radius, double& alpha) const

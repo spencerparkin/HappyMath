@@ -550,7 +550,7 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 		if (!otherMesh.RayCast(ray, beta, unitSurfaceNormal) || beta > alpha)
 		{
 			node = static_cast<LabeledPolygonNode*>(graph.FindNodeForPolygon(hitPolygon));
-			assert(node != nullptr);
+			HM_ASSERT(node != nullptr);
 			node->label = LabeledPolygonNode::Label::OUTSIDE;
 			break;
 		}
@@ -565,7 +565,7 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	for (const Vector3& vertex : intersectionArray)
 	{
 		int i = mesh.FindVertex(vertex);
-		assert(i != -1);
+		HM_ASSERT(i != -1);
 		if (i == -1)
 			return false;
 
@@ -585,7 +585,7 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 		node = *nodeQueue.begin();
 		nodeQueue.pop_front();
 
-		assert(node->label != LabeledPolygonNode::UNKNOWN);
+		HM_ASSERT(node->label != LabeledPolygonNode::UNKNOWN);
 
 		for (int i = 0; i < (int)node->adjacentNodeArray.size(); i++)
 		{
@@ -601,7 +601,7 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 				if (adjacentNode->polygon->HasVertex(node->polygon->vertexArray[j]))
 					commonVertices.push_back(node->polygon->vertexArray[j]);
 
-			assert(commonVertices.size() >= 2);
+			HM_ASSERT(commonVertices.size() >= 2);
 
 			bool boundaryCrossed = true;
 
