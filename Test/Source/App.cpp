@@ -2,6 +2,7 @@
 #include "HappyMath/Frustum.h"
 #include "TestMeshSetOps.h"
 #include "TestSurfaceUnion.h"
+#include "TestMeshCut.h"
 #include "TestPolygonCut.h"
 #include <assert.h>
 
@@ -53,6 +54,7 @@ bool App::Setup()
 	SDL_GL_SetSwapInterval(1);	// Enable V-sync.
 
 	//this->testCase = new TestSurfaceUnion();
+	//this->testCase = new TestMeshCut();
 	this->testCase = new TestMeshSetOps();
 	//this->testCase = new TestPolygonCut();
 

@@ -4,20 +4,19 @@
 #include "HappyMath/PolygonMesh.h"
 #include "HappyMath/LineSegment.h"
 
-class TestMeshSetOps : public TestCase
+class TestMeshCut : public TestCase
 {
 public:
-	TestMeshSetOps();
-	virtual ~TestMeshSetOps();
+	TestMeshCut();
+	virtual ~TestMeshCut();
 
 	virtual bool Setup() override;
 	virtual bool Render() override;
 	virtual void HandleController(XBoxController* controller) override;
 
 protected:
-	HappyMath::PolygonMesh meshA, meshB;
-	HappyMath::PolygonMesh diffMesh;
+	HappyMath::PolygonMesh cutMeshA, cutMeshB;
 	bool renderMeshA;
 	bool renderMeshB;
-	bool renderDiffMesh;
+	std::vector<HappyMath::Vector3> intersectionArray;
 };

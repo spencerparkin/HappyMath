@@ -476,8 +476,11 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 
 	auto nodeFactory = []() -> PolygonGraph::Node* { return new LabeledPolygonNode(); };
 
-	graphA.Regenerate(cutMeshA, nodeFactory);
-	graphB.Regenerate(cutMeshB, nodeFactory);
+	if (!graphA.Regenerate(cutMeshA, nodeFactory))
+		return false;
+
+	if (!graphB.Regenerate(cutMeshB, nodeFactory))
+		return false;
 
 	AxisAlignedBoundingBox box;
 	box.MakeReadyForExpansion();
@@ -486,6 +489,7 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	
 	Sphere sphere;
 	box.GetToSphere(sphere);
+	sphere.radius *= 2.0;
 
 	if (!LabelPolygons(graphA, cutMeshA, cutMeshB, sphere, intersectionArray))
 		return false;

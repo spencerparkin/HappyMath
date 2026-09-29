@@ -23,6 +23,8 @@ set(HAPPY_MATH_TEST_SOURCES
 	Source/TestSurfaceUnion.h
 	Source/TestMeshSetOps.cpp
 	Source/TestMeshSetOps.h
+	Source/TestMeshCut.cpp
+	Source/TestMeshCut.h
 	Source/TestPolygonCut.cpp
 	Source/TestPolygonCut.h
 	Source/XBoxController.cpp
