@@ -162,6 +162,14 @@ namespace HappyMath
 		 */
 		void Expand(AxisAlignedBoundingBox& box) const;
 
+		/**
+		 * Add vertices to polygons such that their shape is not changed, but that
+		 * no vertex on a polygon's edge is not used by the polygon.
+		 * 
+		 * @return The number of added vertices is returned.
+		 */
+		int AddRedundantVertices(double tolerance = 1e-5);
+
 		enum class Polyhedron
 		{
 			TETRAHEDRON,

@@ -472,6 +472,11 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	cutMeshA.FromStandalonePolygonArray(polygonArrayA);
 	cutMeshB.FromStandalonePolygonArray(polygonArrayB);
 
+	int addCount = 0;
+	
+	addCount = cutMeshA.AddRedundantVertices();
+	addCount = cutMeshB.AddRedundantVertices();
+
 	PolygonGraph graphA, graphB;
 
 	auto nodeFactory = []() -> PolygonGraph::Node* { return new LabeledPolygonNode(); };
@@ -884,6 +889,48 @@ void PolygonMesh::Dump(std::ostream& stream) const
 
 	for (const Polygon& polygon : this->polygonArray)
 		polygon.Dump(stream);
+}
+
+int PolygonMesh::AddRedundantVertices(double tolerance /*= 1e-5*/)
+{
+	int addCount = 0;
+
+	for (int i = 0; i < (int)this->vertexArray.size(); i++)
+	{
+		for (Polygon& polygon : this->polygonArray)
+		{
+			if (polygon.HasVertex(i))
+				continue;
+
+			HappyMath::Polygon standardPolygon;
+			polygon.ToStandalonePolygon(standardPolygon, this);
+
+			const Vector3& vertex = this->vertexArray[i];
+
+			Plane plane = standardPolygon.CalcPlane(true);
+			if (plane.GetSide(vertex, tolerance) != Plane::NEITHER)
+				continue;
+			
+			for (int j = 0; j < (int)standardPolygon.vertexArray.size(); j++)
+			{
+				int k = standardPolygon.Mod(j + 1);
+
+				LineSegment edgeSegment;
+				edgeSegment.point[0] = standardPolygon.vertexArray[j];
+				edgeSegment.point[1] = standardPolygon.vertexArray[k];
+
+				if (edgeSegment.ShortestDistanceTo(vertex) < tolerance)
+				{
+					// This assumes our vertex array is parallel with the standard polygon's vertex array.
+					polygon.vertexArray.insert(polygon.vertexArray.begin() + k, i);
+					addCount++;
+					break;
+				}
+			}
+		}
+	}
+
+	return addCount;
 }
 
 void PolygonMesh::Restore(std::istream& stream)
