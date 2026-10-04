@@ -612,6 +612,9 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 
 			HM_ASSERT(commonVertices.size() >= 2);
 
+			// STPTODO: This is fundamentally wrong, and I can see why.  I am not correctly
+			//          detecting when we cross the boundary.
+
 			bool boundaryCrossed = true;
 
 			for (int vertex : commonVertices)
