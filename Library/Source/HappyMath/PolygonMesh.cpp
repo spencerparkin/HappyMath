@@ -462,9 +462,9 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	std::vector<HappyMath::Polygon> polygonArrayA;
 	std::vector<HappyMath::Polygon> polygonArrayB;
 
-	std::vector<Vector3> intersectionArray;
+	std::vector<LineSegment> cutSegmentArray;
 
-	if (!CalculateCutPolygons(polygonMeshA, polygonMeshB, polygonArrayA, polygonArrayB, intersectionArray, planeThickness))
+	if (!CalculateCutPolygons(polygonMeshA, polygonMeshB, polygonArrayA, polygonArrayB, cutSegmentArray, planeThickness))
 		return false;
 
 	PolygonMesh cutMeshA, cutMeshB;
@@ -472,10 +472,8 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	cutMeshA.FromStandalonePolygonArray(polygonArrayA);
 	cutMeshB.FromStandalonePolygonArray(polygonArrayB);
 
-	int addCount = 0;
-	
-	addCount = cutMeshA.AddRedundantVertices();
-	addCount = cutMeshB.AddRedundantVertices();
+	cutMeshA.AddRedundantVertices();
+	cutMeshB.AddRedundantVertices();
 
 	PolygonGraph graphA, graphB;
 
@@ -496,10 +494,10 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	box.GetToSphere(sphere);
 	sphere.radius *= 2.0;
 
-	if (!LabelPolygons(graphA, cutMeshA, cutMeshB, sphere, intersectionArray))
+	if (!LabelPolygons(graphA, cutMeshA, cutMeshB, sphere, cutSegmentArray))
 		return false;
 
-	if (!LabelPolygons(graphB, cutMeshB, cutMeshA, sphere, intersectionArray))
+	if (!LabelPolygons(graphB, cutMeshB, cutMeshA, sphere, cutSegmentArray))
 		return false;
 
 	setOpPolygons.insidePolygonsA.clear();
@@ -521,7 +519,7 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 									PolygonMesh& mesh,
 									PolygonMesh& otherMesh,
 									const Sphere& sphere,
-									const std::vector<Vector3>& intersectionArray)
+									const std::vector<LineSegment>& cutSegmentArray)
 {
 	LabeledPolygonNode* node = nullptr;
 
@@ -565,13 +563,15 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	if (!node)
 		return false;
 
-	// Identify the vertices that make up the boundary between the two meshes.
-	std::unordered_set<int> boundaryVertexSet;
-	for (const Vector3& vertex : intersectionArray)
+	// Identify the edges that make up the boundary between the two meshes.
+	std::set<Graph::UnorderedEdge, Graph::UnorderedEdge> boundaryEdgeSet;
+	for (const LineSegment& cutSegment : cutSegmentArray)
 	{
-		int i = mesh.FindVertex(vertex);
-		if (i != -1)
-			boundaryVertexSet.insert(i);
+		Graph::UnorderedEdge edge;
+		edge.i = mesh.FindVertex(cutSegment.point[0]);
+		edge.j = mesh.FindVertex(cutSegment.point[1]);
+		if (edge.i != -1 && edge.j != -1)
+			boundaryEdgeSet.insert(edge);
 	}
 
 	// Lastly, walk the mesh (BFS-style) and label the polygons as we go.
@@ -610,23 +610,13 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 				if (adjacentNode->polygon->HasVertex(node->polygon->vertexArray[j]))
 					commonVertices.push_back(node->polygon->vertexArray[j]);
 
-			HM_ASSERT(commonVertices.size() >= 2);
+			HM_ASSERT(commonVertices.size() == 2);
+			if (commonVertices.size() != 2)
+				return false;
 
-			// STPTODO: This is fundamentally wrong, and I can see why.  I am not correctly
-			//          detecting when we cross the boundary.
+			Graph::UnorderedEdge sharedEdge(commonVertices[0], commonVertices[1]);
 
-			bool boundaryCrossed = true;
-
-			for (int vertex : commonVertices)
-			{
-				if (boundaryVertexSet.find(vertex) == boundaryVertexSet.end())
-				{
-					boundaryCrossed = false;
-					break;
-				}
-			}
-
-			if (!boundaryCrossed)
+			if (boundaryEdgeSet.find(sharedEdge) == boundaryEdgeSet.end())
 				adjacentNode->label = node->label;
 			else
 			{
@@ -682,7 +672,7 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 									const PolygonMesh& polygonMeshB,
 									std::vector<HappyMath::Polygon>& polygonArrayA,
 									std::vector<HappyMath::Polygon>& polygonArrayB,
-									std::vector<Vector3>& intersectionArray,
+									std::vector<LineSegment>& cutSegmentArray,
 									double planeThickness /*= 1e-5*/)
 {
 	polygonMeshA.ToStandalonePolygonArray(polygonArrayA);
@@ -704,6 +694,30 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 		boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(polygon));
 
 	polygonArrayB.clear();
+
+	for (const HappyMath::Polygon& polygonA : polygonArrayA)
+	{
+		AxisAlignedBoundingBox box;
+		polygonA.CalcBoundingBox(box);
+
+		std::vector<std::shared_ptr<BoxTree::Object>> objectArray;
+		if (!boxTreeMeshB.FindObjectsOverlappingBox(box, objectArray))
+			continue;
+		
+		for (int i = 0; i < (int)objectArray.size(); i++)
+		{
+			HappyMath::Polygon& polygonB = static_cast<PolygonObject*>(objectArray[i].get())->polygon;
+
+			LineSegment cutSegment;
+			if (!cutSegment.Intersect(polygonA, polygonB, planeThickness))
+				continue;
+
+			if (cutSegment.IsDegenerate())
+				continue;
+
+			cutSegmentArray.push_back(cutSegment);
+		}
+	}
 
 	std::list<HappyMath::Polygon> polygonQueueA;
 	for (HappyMath::Polygon& polygon : polygonArrayA)
@@ -763,11 +777,7 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 			}
 
 			if (cutOccurred)
-			{
-				intersectionArray.push_back(cutSegment.point[0]);
-				intersectionArray.push_back(cutSegment.point[1]);
 				break;
-			}
 		}
 
 		if (requeuePolygonA)

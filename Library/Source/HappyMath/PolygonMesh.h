@@ -116,7 +116,7 @@ namespace HappyMath
 								const PolygonMesh& polygonMeshB,
 								std::vector<HappyMath::Polygon>& polygonArrayA,
 								std::vector<HappyMath::Polygon>& polygonArrayB,
-								std::vector<Vector3>& intersectionArray,
+								std::vector<LineSegment>& cutSegmentArray,
 								double planeThickness = 1e-5);
 
 		/**
@@ -283,7 +283,7 @@ namespace HappyMath
 	protected:
 		static bool BucketSortPolygons(const PolygonGraph& graph, const PolygonMesh& mesh, std::vector<HappyMath::Polygon>& insidePolygonArray, std::vector<HappyMath::Polygon>& outsidePolygonArray);
 
-		static bool LabelPolygons(PolygonGraph& graph, PolygonMesh& mesh, PolygonMesh& otherMesh, const Sphere& sphere, const std::vector<Vector3>& intersectionArray);
+		static bool LabelPolygons(PolygonGraph& graph, PolygonMesh& mesh, PolygonMesh& otherMesh, const Sphere& sphere, const std::vector<LineSegment>& cutSegmentArray);
 
 		std::vector<Vector3> vertexArray;
 		std::vector<Polygon> polygonArray;

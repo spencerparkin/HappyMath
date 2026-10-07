@@ -62,7 +62,7 @@ TestMeshCut::TestMeshCut()
 
 	std::vector<HappyMath::Polygon> polygonArrayA, polygonArrayB;
 
-	if (!PolygonMesh::CalculateCutPolygons(meshA, meshB, polygonArrayA, polygonArrayB, this->intersectionArray))
+	if (!PolygonMesh::CalculateCutPolygons(meshA, meshB, polygonArrayA, polygonArrayB, this->cutSegmentArray))
 		return false;
 
 	this->cutMeshA.FromStandalonePolygonArray(polygonArrayA);
@@ -79,13 +79,14 @@ TestMeshCut::TestMeshCut()
 	if (this->renderMeshB)
 		this->RenderMeshPolygons(this->cutMeshB);
 
-	glPointSize(4.0f);
-	glBegin(GL_POINTS);
+	glLineWidth(2.0f);
+	glBegin(GL_LINES);
 
-	for (const Vector3& point : this->intersectionArray)
+	for (const HappyMath::LineSegment& cutSegment : this->cutSegmentArray)
 	{
 		glColor3d(1.0, 1.0, 1.0);
-		glVertex3dv(&point.x);
+		glVertex3dv(&cutSegment.point[0].x);
+		glVertex3dv(&cutSegment.point[1].x);
 	}
 
 	glEnd();
