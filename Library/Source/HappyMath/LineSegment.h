@@ -101,6 +101,11 @@ namespace HappyMath
 		bool ContainsInteriorPoint(const Vector3& point, double tolerance = 1e-6) const;
 
 		/**
+		 * Tell the caller if the given line segment's points is a subset of this line segment's points.
+		 */
+		bool ContainsLineSegment(const LineSegment& lineSegment, double tolerance = 1e-6) const;
+
+		/**
 		 * Parameterizing each line segments as a line with infinite length, find the parameter
 		 * (alpha or beta) that locates the point on the line closest to the other.
 		 */

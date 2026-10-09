@@ -142,6 +142,11 @@ bool LineSegment::ContainsInteriorPoint(const Vector3& point, double tolerance /
 	return this->ContainsPoint(point, &isInterior, tolerance) && isInterior;
 }
 
+bool LineSegment::ContainsLineSegment(const LineSegment& lineSegment, double tolerance /*= 1e-6*/) const
+{
+	return this->ContainsPoint(lineSegment.point[0], nullptr, tolerance) && this->ContainsPoint(lineSegment.point[1], nullptr, tolerance);
+}
+
 /*static*/ bool LineSegment::CalcLineSegmentCrossingAlphaBeta(const LineSegment& lineSegmentA, const LineSegment& lineSegmentB, double& alpha, double& beta)
 {
 	Vector3 a = lineSegmentA.point[0];

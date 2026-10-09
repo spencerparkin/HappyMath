@@ -453,6 +453,24 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	return true;
 }
 
+void PolygonMesh::GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::UnorderedEdge>& edgeSet) const
+{
+	for (const Polygon& polygon : this->polygonArray)
+	{
+		for (int i = 0; i < (int)polygon.vertexArray.size(); i++)
+		{
+			int j = polygon.Mod(i + 1);
+
+			Graph::UnorderedEdge edge;
+			edge.i = polygon.vertexArray[i];
+			edge.j = polygon.vertexArray[j];
+
+			if (edgeSet.find(edge) == edgeSet.end())
+				edgeSet.insert(edge);
+		}
+	}
+}
+
 /*static*/ bool PolygonMesh::CalculateSetOperationPolygons(
 									const PolygonMesh& polygonMeshA,
 									const PolygonMesh& polygonMeshB,
@@ -472,6 +490,8 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 	cutMeshA.FromStandalonePolygonArray(polygonArrayA);
 	cutMeshB.FromStandalonePolygonArray(polygonArrayB);
 
+	// This step is important, because we want one and only one edge to form
+	// the boundary between two adjacent polygons.
 	cutMeshA.AddRedundantVertices();
 	cutMeshB.AddRedundantVertices();
 
@@ -564,13 +584,24 @@ bool PolygonMesh::CalculateDifference(const PolygonMesh& polygonMeshA, const Pol
 		return false;
 
 	// Identify the edges that make up the boundary between the two meshes.
-	std::set<Graph::UnorderedEdge, Graph::UnorderedEdge> boundaryEdgeSet;
-	for (const LineSegment& cutSegment : cutSegmentArray)
+	std::set<Graph::UnorderedEdge, Graph::UnorderedEdge> edgeSet, boundaryEdgeSet;
+	mesh.GenerateEdgeSet(edgeSet);
+	for (auto edge : edgeSet)
 	{
-		Graph::UnorderedEdge edge;
-		edge.i = mesh.FindVertex(cutSegment.point[0]);
-		edge.j = mesh.FindVertex(cutSegment.point[1]);
-		if (edge.i != -1 && edge.j != -1)
+		LineSegment edgeSegment(mesh.vertexArray[edge.i], mesh.vertexArray[edge.j]);
+
+		bool foundCutSegment = false;
+
+		for (const LineSegment& cutSegment : cutSegmentArray)
+		{
+			if (edgeSegment.ContainsLineSegment(cutSegment))
+			{
+				foundCutSegment = true;
+				break;
+			}
+		}
+
+		if (foundCutSegment)
 			boundaryEdgeSet.insert(edge);
 	}
 

@@ -2,6 +2,7 @@
 
 #include "HappyMath/Vector3.h"
 #include "HappyMath/Plane.h"
+#include "HappyMath/Graph.h"
 #include <vector>
 
 namespace HappyMath
@@ -90,6 +91,12 @@ namespace HappyMath
 		 * calculate this mesh as the first minus the second.  (Klein bottles don't work.)
 		 */
 		bool CalculateDifference(const PolygonMesh& polygonMeshA, const PolygonMesh& polygonMeshB);
+
+		/**
+		 * Return the set of polygon edges in this mesh.  If two polygons share an edge, that
+		 * edge is returned in the set only once.
+		 */
+		void GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::UnorderedEdge>& edgeSet) const;
 
 		struct SetOperationPolygons
 		{

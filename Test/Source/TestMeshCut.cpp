@@ -82,9 +82,20 @@ TestMeshCut::TestMeshCut()
 	glLineWidth(2.0f);
 	glBegin(GL_LINES);
 
-	for (const HappyMath::LineSegment& cutSegment : this->cutSegmentArray)
+	double r = 0.2;
+	double g = 0.8;
+	double b = 0.1;
+
+	for (int i = 0; i < (int)this->cutSegmentArray.size(); i++)
 	{
-		glColor3d(1.0, 1.0, 1.0);
+		const HappyMath::LineSegment& cutSegment = this->cutSegmentArray[i];
+
+		glColor3d(r, g, b);
+		
+		r = ::fmod(g + 0.23, 1.0);
+		g = ::fmod(b + 0.84, 1.0);
+		b = ::fmod(r + 0.57, 1.0);
+
 		glVertex3dv(&cutSegment.point[0].x);
 		glVertex3dv(&cutSegment.point[1].x);
 	}
