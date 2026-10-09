@@ -414,18 +414,10 @@ bool PolygonMesh::CalculateIntersection(const PolygonMesh& polygonMeshA, const P
 	std::vector<HappyMath::Polygon> polygonArray;
 
 	for (HappyMath::Polygon& polygon : setOpPolygons.insidePolygonsA)
-	{
-		HappyMath::Polygon reversePolygon;
-		reversePolygon.ReverseWinding(polygon);
-		polygonArray.push_back(std::move(reversePolygon));
-	}
+		polygonArray.push_back(std::move(polygon));
 
 	for (HappyMath::Polygon& polygon : setOpPolygons.insidePolygonsB)
-	{
-		HappyMath::Polygon reversePolygon;
-		reversePolygon.ReverseWinding(polygon);
-		polygonArray.push_back(std::move(reversePolygon));
-	}
+		polygonArray.push_back(std::move(polygon));
 
 	this->FromStandalonePolygonArray(polygonArray);
 	return true;

@@ -29,7 +29,7 @@ TestMeshSetOps::TestMeshSetOps()
 	transform.translation.SetComponents(2.0, 2.0, 2.0);
 	transform.TransformMesh(this->meshB);
 	
-	if (!this->diffMesh.CalculateDifference(this->meshA, this->meshB))
+	if (!this->diffMesh.CalculateUnion(this->meshA, this->meshB))
 		return false;
 
 	return true;
