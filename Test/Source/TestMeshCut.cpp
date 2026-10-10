@@ -49,7 +49,7 @@ TestMeshCut::TestMeshCut()
 	// all polygons have coplanar vertices.
 	meshA.TessellateFaces();
 	meshB.TessellateFaces();
-#endif
+#else
 
 	PolygonMesh meshA, meshB;
 
@@ -58,7 +58,9 @@ TestMeshCut::TestMeshCut()
 
 	Transform transform;
 	transform.translation.SetComponents(2.0, 2.0, 2.0);
+	transform.matrix.SetFromAxisAngle(Vector3(1.0, 1.0, 1.0).Normalized(), M_PI / 3.0);
 	transform.TransformMesh(meshB);
+#endif
 
 	std::vector<HappyMath::Polygon> polygonArrayA, polygonArrayB;
 

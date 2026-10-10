@@ -54,8 +54,8 @@ bool App::Setup()
 	SDL_GL_SetSwapInterval(1);	// Enable V-sync.
 
 	//this->testCase = new TestSurfaceUnion();
-	//this->testCase = new TestMeshCut();
-	this->testCase = new TestMeshSetOps();
+	this->testCase = new TestMeshCut();
+	//this->testCase = new TestMeshSetOps();
 	//this->testCase = new TestPolygonCut();
 
 	if (!this->testCase->Setup())
