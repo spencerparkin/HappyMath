@@ -70,6 +70,12 @@ namespace HappyMath
 		bool ContainsInteriorValue(double value) const;
 
 		/**
+		 * Return true if the given value V is in (E-eps,E+eps), where
+		 * E is either end-point of this enterval.
+		 */
+		bool IsEndPoint(double value, double eps = 1e-5) const;
+
+		/**
 		 * Return true if the given interval is a sub-interval of this interval.
 		 * That is, return true if the boundary points of the given interval are
 		 * contained within this interval.

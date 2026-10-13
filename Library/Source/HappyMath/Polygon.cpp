@@ -225,6 +225,14 @@ bool Polygon::SplitAgainstPlane(const Plane& plane, Polygon& backPolygon, Polygo
 	backPolygon.vertexArray.clear();
 	frontPolygon.vertexArray.clear();
 
+	std::vector<Plane::Side> sideArray(this->vertexArray.size());
+
+	for (int i = 0; i < (signed)this->vertexArray.size(); i++)
+	{
+		const Vector3& vertex = this->vertexArray[i];
+		sideArray[i] = plane.GetSide(vertex, planeThickness);
+	}
+
 	for (int i = 0; i < (signed)this->vertexArray.size(); i++)
 	{
 		int j = (i + 1) % this->vertexArray.size();
@@ -232,24 +240,29 @@ bool Polygon::SplitAgainstPlane(const Plane& plane, Polygon& backPolygon, Polygo
 		const Vector3& vertexA = this->vertexArray[i];
 		const Vector3& vertexB = this->vertexArray[j];
 
-		Plane::Side side = plane.GetSide(vertexA, planeThickness);
+		const Plane::Side& sideA = sideArray[i];
+		const Plane::Side& sideB = sideArray[j];
 
-		if (side == Plane::Side::BACK || side == Plane::Side::NEITHER)
+		if (sideA == Plane::Side::BACK || sideA == Plane::Side::NEITHER)
 			backPolygon.vertexArray.push_back(vertexA);
-		if (side == Plane::Side::FRONT || side == Plane::Side::NEITHER)
+		if (sideA == Plane::Side::FRONT || sideA == Plane::Side::NEITHER)
 			frontPolygon.vertexArray.push_back(vertexA);
 
-		double edgeLength = 0.0;
-		Ray ray(vertexA, vertexB - vertexA);
-		ray.unitDirection.Normalize(&edgeLength);
-		double alpha = 0.0;
-		Interval interval(0.0, edgeLength);
-
-		if (ray.CastAgainst(plane, alpha) && interval.ContainsInteriorValue(alpha))
+		// Don't cast a ray if that ray is entirely inside the plane.
+		if (sideA != Plane::Side::NEITHER && sideB != Plane::Side::NEITHER)
 		{
-			Vector3 intersectionPoint = ray.CalculatePoint(alpha);
-			backPolygon.vertexArray.push_back(intersectionPoint);
-			frontPolygon.vertexArray.push_back(intersectionPoint);
+			double edgeLength = 0.0;
+			Ray ray(vertexA, vertexB - vertexA);
+			ray.unitDirection.Normalize(&edgeLength);
+			double alpha = 0.0;
+			Interval interval(0.0, edgeLength);
+
+			if (ray.CastAgainst(plane, alpha) && interval.ContainsInteriorValue(alpha) && !interval.IsEndPoint(alpha, planeThickness / 2.0))
+			{
+				Vector3 intersectionPoint = ray.CalculatePoint(alpha);
+				backPolygon.vertexArray.push_back(intersectionPoint);
+				frontPolygon.vertexArray.push_back(intersectionPoint);
+			}
 		}
 	}
 

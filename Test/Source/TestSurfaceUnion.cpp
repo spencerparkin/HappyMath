@@ -43,6 +43,9 @@ TestSurfaceUnion::TestSurfaceUnion()
 
 /*virtual*/ bool TestSurfaceUnion::Render()
 {
+	if (!TestCase::Render())
+		return false;
+
 	this->RenderGraphNodes(&this->graph, Vector3(0.0, 1.0, 0.0));
 
 	this->RenderEdgeSet(this->edgeSet, &this->graph, Vector3(1.0, 1.0, 1.0));

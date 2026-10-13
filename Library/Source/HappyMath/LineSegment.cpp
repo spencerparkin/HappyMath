@@ -333,11 +333,11 @@ bool LineSegment::Intersect(const Polygon& polygonA, const Polygon& polygonB, do
 
 	std::vector<Vector3> pointArray;
 
-	auto addPoint = [&pointArray](const Vector3& point) -> void
+	auto addPoint = [&pointArray, planeThickness](const Vector3& point) -> void
 		{
 			bool foundPoint = false;
 			for (int k = 0; k < (int)pointArray.size() && !foundPoint; k++)
-				foundPoint = pointArray[k].IsPoint(point);
+				foundPoint = pointArray[k].IsPoint(point, planeThickness);
 
 			if (!foundPoint)
 				pointArray.push_back(point);

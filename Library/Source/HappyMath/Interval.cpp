@@ -61,6 +61,17 @@ bool Interval::ContainsInteriorValue(double value) const
 	return this->A < value && value < this->B;
 }
 
+bool Interval::IsEndPoint(double value, double eps /*= 1e-5*/) const
+{
+	if (this->A - eps < value && value < this->A + eps)
+		return true;
+
+	if (this->B - eps < value && value < this->B + eps)
+		return true;
+
+	return false;
+}
+
 bool Interval::ContainsInterval(const Interval& interval) const
 {
 	return this->ContainsValue(interval.A) && this->ContainsValue(interval.B);

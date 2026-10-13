@@ -19,4 +19,5 @@ protected:
 	bool renderMeshA;
 	bool renderMeshB;
 	std::vector<HappyMath::LineSegment> cutSegmentArray;
+	int hackOffset;
 };

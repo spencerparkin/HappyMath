@@ -1,11 +1,26 @@
 #include "TestCase.h"
 #include "HappyMath/Polygon.h"
+#include "HappyMath/LineSegment.h"
 #include <SDL3/SDL_opengl.h>
 
 using namespace HappyMath;
 
 TestCase::TestCase()
 {
+	this->colorOffset = 0;
+
+	this->colorArray.push_back(Vector3(1.0, 0.0, 0.0));
+	this->colorArray.push_back(Vector3(0.0, 1.0, 0.0));
+	this->colorArray.push_back(Vector3(0.0, 0.0, 1.0));
+	this->colorArray.push_back(Vector3(1.0, 1.0, 0.0));
+	this->colorArray.push_back(Vector3(0.0, 1.0, 1.0));
+	this->colorArray.push_back(Vector3(1.0, 0.0, 1.0));
+	this->colorArray.push_back(Vector3(1.0, 0.5, 0.0));
+	this->colorArray.push_back(Vector3(0.0, 1.0, 0.5));
+	this->colorArray.push_back(Vector3(0.5, 0.0, 1.0));
+	this->colorArray.push_back(Vector3(1.0, 1.0, 0.5));
+	this->colorArray.push_back(Vector3(0.5, 1.0, 1.0));
+	this->colorArray.push_back(Vector3(1.0, 0.5, 1.0));
 }
 
 /*virtual*/ TestCase::~TestCase()
@@ -19,6 +34,13 @@ TestCase::TestCase()
 
 /*virtual*/ bool TestCase::Shutdown()
 {
+	return true;
+}
+
+/*virtual*/ bool TestCase::Render()
+{
+	this->colorOffset = 0;
+
 	return true;
 }
 
@@ -58,13 +80,16 @@ void TestCase::RenderEdgeSet(const std::set<HappyMath::Graph::UnorderedEdge, Hap
 	glEnd();
 }
 
+const HappyMath::Vector3& TestCase::GetNextColor()
+{
+	this->colorOffset = (this->colorOffset + 1) % this->colorArray.size();
+
+	return this->colorArray[this->colorOffset];
+}
+
 void TestCase::RenderMeshTriangles(const HappyMath::PolygonMesh& polygonMesh)
 {
 	glBegin(GL_TRIANGLES);
-
-	double r = 0.1;
-	double g = 0.2;
-	double b = 0.3;
 
 	for (int i = 0; i < polygonMesh.GetNumPolygons(); i++)
 	{
@@ -72,11 +97,8 @@ void TestCase::RenderMeshTriangles(const HappyMath::PolygonMesh& polygonMesh)
 		if (polygon.vertexArray.size() != 3)
 			continue;
 
-		glColor3d(r, g, b);
-
-		r = ::fmod(r + 0.59, 1.0);
-		g = ::fmod(g + 0.72, 1.0);
-		b = ::fmod(b + 0.27, 1.0);
+		const Vector3& color = this->GetNextColor();
+		glColor3dv(&color.x);
 
 		for (int j = 0; j < (int)polygon.vertexArray.size(); j++)
 		{
@@ -88,22 +110,19 @@ void TestCase::RenderMeshTriangles(const HappyMath::PolygonMesh& polygonMesh)
 	glEnd();
 }
 
-void TestCase::RenderMeshPolygons(const HappyMath::PolygonMesh& polygonMesh)
+void TestCase::RenderMeshPolygons(const HappyMath::PolygonMesh& polygonMesh, int isolatedPolygon /*= -1*/)
 {
-	double r = 0.1;
-	double g = 0.2;
-	double b = 0.3;
-
 	for (int i = 0; i < polygonMesh.GetNumPolygons(); i++)
 	{
+		const Vector3& color = this->GetNextColor();
+
+		if (isolatedPolygon != -1 && i != isolatedPolygon)
+			continue;
+
 		const PolygonMesh::Polygon& polygon = polygonMesh.GetPolygon(i);
 
 		glBegin(GL_POLYGON);
-		glColor3d(r, g, b);
-
-		r = ::fmod(r + 0.59, 1.0);
-		g = ::fmod(g + 0.72, 1.0);
-		b = ::fmod(b + 0.27, 1.0);
+		glColor3dv(&color.x);
 
 		for (int j = 0; j < (int)polygon.vertexArray.size(); j++)
 		{
@@ -113,6 +132,25 @@ void TestCase::RenderMeshPolygons(const HappyMath::PolygonMesh& polygonMesh)
 
 		glEnd();
 	}
+}
+
+void TestCase::RenderLineSegments(const std::vector<HappyMath::LineSegment>& lineSegmentArray)
+{
+	glLineWidth(2.0f);
+	glBegin(GL_LINES);
+
+	for (int i = 0; i < (int)lineSegmentArray.size(); i++)
+	{
+		const HappyMath::LineSegment& lineSegment = lineSegmentArray[i];
+
+		const Vector3& color = this->GetNextColor();
+		glColor3dv(&color.x);
+
+		glVertex3dv(&lineSegment.point[0].x);
+		glVertex3dv(&lineSegment.point[1].x);
+	}
+
+	glEnd();
 }
 
 void TestCase::RenderPolygonEdges(const HappyMath::Polygon& polygon, const HappyMath::Vector3& color)

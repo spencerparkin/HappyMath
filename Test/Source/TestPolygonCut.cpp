@@ -14,14 +14,22 @@ TestPolygonCut::TestPolygonCut()
 
 /*virtual*/ bool TestPolygonCut::Setup()
 {
-	std::ifstream fileStream;
+	/*std::ifstream fileStream;
 	fileStream.open(R"(D:\tmp\data.bin)", std::ios::in | std::ios::binary);
 	if (!fileStream.is_open())
 		return false;
 
 	this->polygonA.Restore(fileStream);
 	this->polygonB.Restore(fileStream);
-	fileStream.close();
+	fileStream.close();*/
+
+	this->polygonA.vertexArray.push_back(Vector3(0.0, 0.0, 0.0));
+	this->polygonA.vertexArray.push_back(Vector3(0.0, 0.0, 5.0));
+	this->polygonA.vertexArray.push_back(Vector3(5.0, 0.0, 0.0));
+
+	this->polygonB.vertexArray.push_back(Vector3(0.0, 0.0, 0.0));
+	this->polygonB.vertexArray.push_back(Vector3(5.0, 0.0, 0.0));
+	this->polygonB.vertexArray.push_back(Vector3(0.0, 5.0, 0.0));
 
 	if (!this->lineSegment.Intersect(this->polygonA, this->polygonB))
 		return false;
@@ -36,6 +44,9 @@ TestPolygonCut::TestPolygonCut()
 
 /*virtual*/ bool TestPolygonCut::Render()
 {
+	if (!TestCase::Render())
+		return false;
+
 	this->RenderPolygonEdges(this->polygonA, Vector3(1.0, 0.0, 0.0));
 	this->RenderPolygonEdges(this->polygonB, Vector3(0.0, 1.0, 0.0));
 

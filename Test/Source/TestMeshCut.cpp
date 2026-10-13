@@ -12,6 +12,8 @@ TestMeshCut::TestMeshCut()
 {
 	this->renderMeshA = true;
 	this->renderMeshB = true;
+
+	this->hackOffset = 0;
 }
 
 /*virtual*/ TestMeshCut::~TestMeshCut()
@@ -60,13 +62,26 @@ TestMeshCut::TestMeshCut()
 	transform.translation.SetComponents(2.0, 2.0, 2.0);
 	transform.matrix.SetFromAxisAngle(Vector3(1.0, 1.0, 1.0).Normalized(), M_PI / 3.0);
 	transform.TransformMesh(meshB);
+
+	/*
+	HappyMath::Polygon polygon;
+	meshA.GetPolygon(10).ToStandalonePolygon(polygon, &meshA);
+	meshA.Clear();
+	std::vector<HappyMath::Polygon> polygonArray = { polygon };
+	meshA.FromStandalonePolygonArray(polygonArray);
+
+	meshB.GetPolygon(0).ToStandalonePolygon(polygon, &meshB);
+	meshB.Clear();
+	polygonArray = { polygon };
+	meshB.FromStandalonePolygonArray(polygonArray);
+	*/
 #endif
 
 	std::vector<HappyMath::Polygon> polygonArrayA, polygonArrayB;
 
 	if (!PolygonMesh::CalculateCutPolygons(meshA, meshB, polygonArrayA, polygonArrayB, this->cutSegmentArray))
 		return false;
-
+	
 	this->cutMeshA.FromStandalonePolygonArray(polygonArrayA);
 	this->cutMeshB.FromStandalonePolygonArray(polygonArrayB);
 
@@ -75,34 +90,16 @@ TestMeshCut::TestMeshCut()
 
 /*virtual*/ bool TestMeshCut::Render()
 {
+	if (!TestCase::Render())
+		return false;
+
 	if (this->renderMeshA)
-		this->RenderMeshPolygons(this->cutMeshA);
+		this->RenderMeshPolygons(this->cutMeshA, -1 /*this->hackOffset*/);
 
 	if (this->renderMeshB)
 		this->RenderMeshPolygons(this->cutMeshB);
 
-	glLineWidth(2.0f);
-	glBegin(GL_LINES);
-
-	double r = 0.2;
-	double g = 0.8;
-	double b = 0.1;
-
-	for (int i = 0; i < (int)this->cutSegmentArray.size(); i++)
-	{
-		const HappyMath::LineSegment& cutSegment = this->cutSegmentArray[i];
-
-		glColor3d(r, g, b);
-		
-		r = ::fmod(g + 0.23, 1.0);
-		g = ::fmod(b + 0.84, 1.0);
-		b = ::fmod(r + 0.57, 1.0);
-
-		glVertex3dv(&cutSegment.point[0].x);
-		glVertex3dv(&cutSegment.point[1].x);
-	}
-
-	glEnd();
+	this->RenderLineSegments(this->cutSegmentArray);
 
 	return true;
 }
@@ -117,5 +114,10 @@ TestMeshCut::TestMeshCut()
 	if (controller->WasButtonPressed(XINPUT_GAMEPAD_Y))
 	{
 		this->renderMeshB = !this->renderMeshB;
+	}
+
+	if (controller->WasButtonPressed(XINPUT_GAMEPAD_B))
+	{
+		this->hackOffset++;
 	}
 }

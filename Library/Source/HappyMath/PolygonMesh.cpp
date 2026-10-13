@@ -750,8 +750,7 @@ void PolygonMesh::GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::Unordere
 
 	while (polygonQueueA.size() > 0)
 	{
-		HappyMath::Polygon polygonA = std::move(*polygonQueueA.begin());
-		polygonQueueA.pop_front();
+		HappyMath::Polygon& polygonA = *polygonQueueA.begin();
 
 		AxisAlignedBoundingBox box;
 		polygonA.CalcBoundingBox(box);
@@ -760,10 +759,11 @@ void PolygonMesh::GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::Unordere
 		if (!boxTreeMeshB.FindObjectsOverlappingBox(box, objectArray))
 		{
 			polygonArrayA.push_back(std::move(polygonA));
+			polygonQueueA.pop_front();
 			continue;
 		}
 
-		bool requeuePolygonA = true;
+		int numCuts = 0;
 
 		for (int i = 0; i < (int)objectArray.size(); i++)
 		{
@@ -776,35 +776,38 @@ void PolygonMesh::GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::Unordere
 			if (cutSegment.IsDegenerate())
 				continue;
 
+			// Polygons A and B touch in a non-trivial way.  Try to cut them against each other.
+
 			Plane planeA = polygonA.CalcPlane(true);
 			Plane planeB = polygonB.CalcPlane(true);
-
-			bool cutOccurred = false;
 
 			HappyMath::Polygon polygonABack, polygonAFront;
 			if (polygonA.SplitAgainstPlane(planeB, polygonABack, polygonAFront))
 			{
+				polygonQueueA.pop_front();
 				polygonQueueA.push_back(std::move(polygonABack));
 				polygonQueueA.push_back(std::move(polygonAFront));
-				requeuePolygonA = false;
-				cutOccurred = true;
+				numCuts++;
 			}
 
 			HappyMath::Polygon polygonBBack, polygonBFront;
 			if (polygonB.SplitAgainstPlane(planeA, polygonBBack, polygonBFront))
 			{
 				boxTreeMeshB.RemoveObject(objectArray[i]);
-				boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(polygonBBack));
-				boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(polygonBFront));
-				cutOccurred = true;
+				boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(std::move(polygonBBack)));
+				boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(std::move(polygonBFront)));
+				numCuts++;
 			}
 
-			if (cutOccurred)
+			if (numCuts > 0)
 				break;
 		}
 
-		if (requeuePolygonA)
+		if (numCuts == 0)
+		{
 			polygonArrayA.push_back(std::move(polygonA));
+			polygonQueueA.pop_front();
+		}
 	}
 
 	boxTreeMeshB.ForAllObjects([&polygonArrayB](BoxTree::Object* object) -> void

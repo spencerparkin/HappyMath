@@ -27,9 +27,10 @@ TestMeshSetOps::TestMeshSetOps()
 	// STPTODO: Need to test all sorts of cases regarding how the boxes overlap.
 	Transform transform;
 	transform.translation.SetComponents(2.0, 2.0, 2.0);
+	transform.matrix.SetFromAxisAngle(Vector3(1.0, 1.0, 1.0).Normalized(), M_PI / 3.0);
 	transform.TransformMesh(this->meshB);
 	
-	if (!this->diffMesh.CalculateUnion(this->meshA, this->meshB))
+	if (!this->diffMesh.CalculateDifference(this->meshA, this->meshB))
 		return false;
 
 	return true;
@@ -37,6 +38,9 @@ TestMeshSetOps::TestMeshSetOps()
 
 /*virtual*/ bool TestMeshSetOps::Render()
 {
+	if (!TestCase::Render())
+		return false;
+
 	if (this->renderMeshA)
 		this->RenderMeshPolygons(this->meshA);
 
