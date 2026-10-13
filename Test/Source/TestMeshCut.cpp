@@ -22,7 +22,7 @@ TestMeshCut::TestMeshCut()
 
 /*virtual*/ bool TestMeshCut::Setup()
 {
-#if 0
+#if 1
 	EllipticalDonutSurface ellipticalSurface;
 	ellipticalSurface.A = 10.0;
 	ellipticalSurface.B = 14.0;

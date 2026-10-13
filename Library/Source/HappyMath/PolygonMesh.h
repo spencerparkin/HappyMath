@@ -117,6 +117,10 @@ namespace HappyMath
 
 		/**
 		 * This function is used by the @ref CalculateSetOperationPolygons function.
+		 * 
+		 * Note that one of the current limitations of this algorithm is that there
+		 * can't be a polygon of one mesh that overlaps with a polygon of the other
+		 * mesh in anything that has non-zero area.
 		 */
 		static bool CalculateCutPolygons(
 								const PolygonMesh& polygonMeshA,

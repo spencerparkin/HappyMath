@@ -21,6 +21,36 @@ TestMeshSetOps::TestMeshSetOps()
 
 /*virtual*/ bool TestMeshSetOps::Setup()
 {
+#if 1
+	EllipticalDonutSurface ellipticalSurface;
+	ellipticalSurface.A = 10.0;
+	ellipticalSurface.B = 14.0;
+	ellipticalSurface.girthRadius = 3.0;
+
+	Graph graph;
+	if (!graph.FromSurface(&ellipticalSurface, 5, 1.0, Vector3(1.0, 0.0, 0.0)))
+		return false;
+
+	if (!graph.ToPolygonMesh(this->meshA))
+		return false;
+
+	SphereSurface sphericalSurface(Vector3(8.0, 0.0, 0.0), 10.0);
+
+	if (!graph.FromSurface(&sphericalSurface, 5, 1.0, Vector3(1.0, 0.0, 0.0)))
+		return false;
+
+	if (!graph.ToPolygonMesh(this->meshB))
+		return false;
+
+	// This is essential before we go into cutting one mesh against another, because the
+	// algorthm that generates a mesh from a surface does not guarentee that all polygons
+	// consist of coplanar vertices, and the algorithm that does the cutting assumes that
+	// all polygons have coplanar vertices.
+	this->meshA.TessellateFaces();
+	this->meshB.TessellateFaces();
+
+#else
+
 	this->meshA.GeneratePolyhedron(PolygonMesh::Polyhedron::HEXADRON, 4.0);
 	this->meshB.GeneratePolyhedron(PolygonMesh::Polyhedron::HEXADRON, 4.0);
 
@@ -29,8 +59,9 @@ TestMeshSetOps::TestMeshSetOps()
 	transform.translation.SetComponents(2.0, 2.0, 2.0);
 	transform.matrix.SetFromAxisAngle(Vector3(1.0, 1.0, 1.0).Normalized(), M_PI / 3.0);
 	transform.TransformMesh(this->meshB);
+#endif
 	
-	if (!this->diffMesh.CalculateDifference(this->meshA, this->meshB))
+	if (!this->diffMesh.CalculateIntersection(this->meshA, this->meshB))
 		return false;
 
 	return true;

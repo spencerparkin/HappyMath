@@ -484,7 +484,7 @@ void PolygonMesh::GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::Unordere
 
 	// This step is important, because we want one and only one edge to form
 	// the boundary between two adjacent polygons.
-	cutMeshA.AddRedundantVertices();
+	cutMeshA.AddRedundantVertices();		// STPTODO: This is very slow.  Can it be sped up?
 	cutMeshB.AddRedundantVertices();
 
 	PolygonGraph graphA, graphB;
