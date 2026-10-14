@@ -484,7 +484,7 @@ void PolygonMesh::GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::Unordere
 
 	// This step is important, because we want one and only one edge to form
 	// the boundary between two adjacent polygons.
-	cutMeshA.AddRedundantVertices();		// STPTODO: This is very slow.  Can it be sped up?
+	cutMeshA.AddRedundantVertices();
 	cutMeshB.AddRedundantVertices();
 
 	PolygonGraph graphA, graphB;
@@ -506,6 +506,7 @@ void PolygonMesh::GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::Unordere
 	box.GetToSphere(sphere);
 	sphere.radius *= 2.0;
 
+	// STPTODO: Why is this so slow?
 	if (!LabelPolygons(graphA, cutMeshA, cutMeshB, sphere, cutSegmentArray))
 		return false;
 
@@ -714,7 +715,7 @@ void PolygonMesh::GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::Unordere
 	boxTreeMeshB.Reset(meshBBox, meshBBox.GetVolume() / 128.0);
 
 	for (HappyMath::Polygon& polygon : polygonArrayB)
-		boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(polygon));
+		boxTreeMeshB.InsertObject(std::make_shared<HappyMath::PolygonObject>(polygon));
 
 	polygonArrayB.clear();
 
@@ -729,7 +730,7 @@ void PolygonMesh::GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::Unordere
 		
 		for (int i = 0; i < (int)objectArray.size(); i++)
 		{
-			HappyMath::Polygon& polygonB = static_cast<PolygonObject*>(objectArray[i].get())->polygon;
+			HappyMath::Polygon& polygonB = static_cast<HappyMath::PolygonObject*>(objectArray[i].get())->polygon;
 
 			LineSegment cutSegment;
 			if (!cutSegment.Intersect(polygonA, polygonB, planeThickness))
@@ -767,7 +768,7 @@ void PolygonMesh::GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::Unordere
 
 		for (int i = 0; i < (int)objectArray.size(); i++)
 		{
-			HappyMath::Polygon& polygonB = static_cast<PolygonObject*>(objectArray[i].get())->polygon;
+			HappyMath::Polygon& polygonB = static_cast<HappyMath::PolygonObject*>(objectArray[i].get())->polygon;
 
 			LineSegment cutSegment;
 			if (!cutSegment.Intersect(polygonA, polygonB, planeThickness))
@@ -794,8 +795,8 @@ void PolygonMesh::GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::Unordere
 			if (polygonB.SplitAgainstPlane(planeA, polygonBBack, polygonBFront))
 			{
 				boxTreeMeshB.RemoveObject(objectArray[i]);
-				boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(std::move(polygonBBack)));
-				boxTreeMeshB.InsertObject(std::make_shared<PolygonObject>(std::move(polygonBFront)));
+				boxTreeMeshB.InsertObject(std::make_shared<HappyMath::PolygonObject>(std::move(polygonBBack)));
+				boxTreeMeshB.InsertObject(std::make_shared<HappyMath::PolygonObject>(std::move(polygonBFront)));
 				numCuts++;
 			}
 
@@ -812,7 +813,7 @@ void PolygonMesh::GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::Unordere
 
 	boxTreeMeshB.ForAllObjects([&polygonArrayB](BoxTree::Object* object) -> void
 		{
-			polygonArrayB.push_back(std::move(static_cast<PolygonObject*>(object)->polygon));
+			polygonArrayB.push_back(std::move(static_cast<HappyMath::PolygonObject*>(object)->polygon));
 		});
 
 	return true;
@@ -932,12 +933,33 @@ void PolygonMesh::Dump(std::ostream& stream) const
 
 int PolygonMesh::AddRedundantVertices(double tolerance /*= 1e-5*/)
 {
+	AxisAlignedBoundingBox meshBox;
+	meshBox.MakeReadyForExpansion();
+	this->Expand(meshBox);
+	meshBox.Scale(2.0);
+
+	BoxTree boxTreeMesh;
+	boxTreeMesh.Reset(meshBox, meshBox.GetVolume() / 128.0);
+
+	for (int i = 0; i < (int)this->polygonArray.size(); i++)
+		boxTreeMesh.InsertObject(std::make_shared<PolygonObject>(this, i));
+
 	int addCount = 0;
 
 	for (int i = 0; i < (int)this->vertexArray.size(); i++)
 	{
-		for (Polygon& polygon : this->polygonArray)
+		AxisAlignedBoundingBox box(this->vertexArray[i]);
+
+		std::vector<std::shared_ptr<BoxTree::Object>> objectArray;
+		if (!boxTreeMesh.FindObjectsOverlappingBox(box, objectArray))
+			continue;
+
+		for (int j = 0; j < (int)objectArray.size(); j++)
 		{
+			auto polygonObject = static_cast<PolygonObject*>(objectArray[j].get());
+
+			Polygon& polygon = this->polygonArray[polygonObject->polygonOffset];
+
 			if (polygon.HasVertex(i))
 				continue;
 
@@ -1096,6 +1118,11 @@ bool PolygonMesh::Polygon::HasVertex(int vertex) const
 	return false;
 }
 
+const Vector3& PolygonMesh::Polygon::GetVertex(const PolygonMesh* mesh, int i) const
+{
+	return mesh->vertexArray[this->vertexArray[i]];
+}
+
 void PolygonMesh::Polygon::Dump(std::ostream& stream) const
 {
 	uint32_t numVertices = (uint32_t)this->vertexArray.size();
@@ -1117,4 +1144,50 @@ void PolygonMesh::Polygon::Restore(std::istream& stream)
 		stream.read((char*)&j, sizeof(j));
 		this->vertexArray.push_back(j);
 	}
+}
+
+//--------------------------- PolygonMesh::PolygonObject ---------------------------
+
+PolygonMesh::PolygonObject::PolygonObject()
+{
+	this->polygonOffset = -1;
+	this->mesh = nullptr;
+	this->box.MakeReadyForExpansion();
+}
+
+PolygonMesh::PolygonObject::PolygonObject(const PolygonMesh* mesh, int polygonOffset)
+{
+	this->polygonOffset = polygonOffset;
+	this->mesh = mesh;
+	this->box.MakeReadyForExpansion();
+}
+
+/*virtual*/ PolygonMesh::PolygonObject::~PolygonObject()
+{
+}
+
+/*virtual*/ AxisAlignedBoundingBox PolygonMesh::PolygonObject::GetMinimalBoundingBox() const
+{
+	if (!this->box.IsValid())
+	{
+		if (this->polygonOffset >= 0 && this->polygonOffset < (int)this->mesh->polygonArray.size())
+		{
+			const Polygon& polygon = this->mesh->polygonArray[this->polygonOffset];
+
+			for (int i = 0; i < (int)polygon.vertexArray.size(); i++)
+				this->box.Expand(polygon.GetVertex(this->mesh, i));
+		}
+	}
+
+	return this->box;
+}
+
+/*virtual*/ bool PolygonMesh::PolygonObject::OverlapsSphere(const Vector3& center, double radius) const
+{
+	return false;
+}
+
+/*virtual*/ double PolygonMesh::PolygonObject::CalcSquareDistanceToPoint(const Vector3& point) const
+{
+	return 0.0;
 }

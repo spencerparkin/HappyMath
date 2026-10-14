@@ -3,6 +3,7 @@
 #include "HappyMath/Vector3.h"
 #include "HappyMath/Plane.h"
 #include "HappyMath/Graph.h"
+#include "HappyMath/BoxTree.h"
 #include <vector>
 
 namespace HappyMath
@@ -262,6 +263,11 @@ namespace HappyMath
 			bool HasVertex(int vertex) const;
 
 			/**
+			 * Return the vertex at position i in the context of the given mesh.  No bounds check is performed.
+			 */
+			const Vector3& GetVertex(const PolygonMesh* mesh, int i) const;
+
+			/**
 			 * Write this polygon to the given stream in binary form.
 			 */
 			void Dump(std::ostream& stream) const;
@@ -273,6 +279,26 @@ namespace HappyMath
 
 		public:
 			std::vector<int> vertexArray;
+		};
+
+		/**
+		 * 
+		 */
+		class HAPPY_MATH_API PolygonObject : public BoxTree::Object
+		{
+		public:
+			PolygonObject();
+			PolygonObject(const PolygonMesh* mesh, int polygonOffset);
+			virtual ~PolygonObject();
+
+			virtual AxisAlignedBoundingBox GetMinimalBoundingBox() const override;
+			virtual bool OverlapsSphere(const Vector3& center, double radius) const override;
+			virtual double CalcSquareDistanceToPoint(const Vector3& point) const override;
+
+		public:
+			int polygonOffset;
+			const PolygonMesh* mesh;
+			mutable AxisAlignedBoundingBox box;
 		};
 
 		const std::vector<Vector3>& GetVertexArray() const { return this->vertexArray; }
