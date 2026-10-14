@@ -506,7 +506,6 @@ void PolygonMesh::GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::Unordere
 	box.GetToSphere(sphere);
 	sphere.radius *= 2.0;
 
-	// STPTODO: Why is this so slow?
 	if (!LabelPolygons(graphA, cutMeshA, cutMeshB, sphere, cutSegmentArray))
 		return false;
 
@@ -540,6 +539,9 @@ void PolygonMesh::GenerateEdgeSet(std::set<Graph::UnorderedEdge, Graph::Unordere
 	{
 		HappyMath::Polygon standardPolygon;
 		polygon.ToStandalonePolygon(standardPolygon, &mesh);
+
+		// STPTODO: Accelerate the ray-casts here by first loading the meshes into box trees,
+		//          and then ray-casting against the box trees.
 
 		// Shoot a ray from the polygon's center out to the surface of the give sphere.
 		// The given sphere should encompass both meshes.
