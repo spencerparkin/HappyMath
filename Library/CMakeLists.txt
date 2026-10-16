@@ -10,8 +10,6 @@ set(HAPPY_MATH_SOURCES
 	Source/HappyMath/Common.h
 	Source/HappyMath/ExpandingPolytopeAlgorithm.cpp
 	Source/HappyMath/ExpandingPolytopeAlgorithm.h
-	Source/HappyMath/FacetGraph.cpp
-	Source/HappyMath/FacetGraph.h
 	Source/HappyMath/Frustum.cpp
 	Source/HappyMath/Frustum.h
 	Source/HappyMath/Function.cpp

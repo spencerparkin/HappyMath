@@ -35,6 +35,11 @@ namespace HappyMath
 			 * This array is parallel to the vertex array in the owned polygon.
 			 */
 			std::vector<Node*> adjacentNodeArray;
+
+			/**
+			 * Some algorithms make use of this flag.
+			 */
+			mutable bool visited;
 		};
 
 		/**
@@ -53,6 +58,12 @@ namespace HappyMath
 		 * Perform a linear search for the node owning the given polygon.
 		 */
 		Node* FindNodeForPolygon(const PolygonMesh::Polygon* polygon);
+
+		/**
+		 * Try to tri-strip the mesh.  Our result here just tries to be
+		 * correct, not necessarily optimal.
+		 */
+		bool GenerateTriangleStrip(std::vector<int>& triangleStrip) const;
 
 		const std::vector<Node*> GetNodeArray() const { return this->nodeArray; }
 
